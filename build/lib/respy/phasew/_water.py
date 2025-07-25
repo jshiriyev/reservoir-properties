@@ -133,7 +133,6 @@ class Water():
 
         return Bw
 
-    @staticmethod
     def gass(T:float|np.ndarray, p:float|np.ndarray, TDS:float|np.ndarray=0.):
         """The following correlation can be used to determine the gas solubility
         in water in scf/stb:
@@ -164,7 +163,6 @@ class Water():
 
         return Rsw
 
-    @staticmethod
     def tens(T:float|np.ndarray, p:float|np.ndarray):
         """Function to Calculate Gas-Water Interfacial Tension in dynes/cm
         

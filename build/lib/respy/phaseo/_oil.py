@@ -3,6 +3,9 @@ import math
 class Oil():
 
     """
+    12. properties of crude oil systems
+    13. crude oil gravity
+    14. specific gravity of the solution gas
     15. gas solubility
     16. bubble-point pressure
     17. oil formation volume factor
@@ -18,6 +21,10 @@ class Oil():
 
     def __init__(self):
 
+        pass
+
+    def get_gravity(self):
+        
         pass
 
     def correct(Tsep, Psep, gas_grav, oil_grav):
