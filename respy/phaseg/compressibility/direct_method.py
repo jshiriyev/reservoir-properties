@@ -1,6 +1,30 @@
-import numpy
+import numpy as np
 
 from scipy import optimize
+
+def zfact(Tr, Pr):
+    """Function to Calculate Gas Compressibility Factor
+	
+	Function version of the following code
+
+    """
+    #'Tr         reduced temperatue
+    #'Pr         reduced pressure
+    a = 1.39 * (Tr - 0.92) ** 0.5 - 0.36 * Tr - 0.101
+    b = (0.62 - 0.23 * Tr) * Pr + (0.066 / (Tr - 0.86) - 0.037) * Pr ** 2 + 0.32 * Pr ** 6 / (10 ** (9 * (Tr - 1)))
+    c = (0.132 - 0.32 * math.log(Tr) / math.log(10))
+    d = 10 ** (0.3106 - 0.49 * Tr + 0.1824 * Tr ** 2)
+    return a + (1 - a) * math.exp(-b) + c * Pr ** d
+
+def gas_fvf(P, T, grav):
+    """Function to Calculate Gas Formation Volume Factor in ft_/scf"""
+    #P          pressure, psia
+    #T          temperature,°F
+    #grav       gas specific gravity
+    Tr = (T + 460) / Tc(grav)
+    Pr = P / Pc(grav)
+    Z = zfact(Tr, Pr)
+    return 0.0283 * Z * (T + 460) / P
 
 class DirectMethod():
 	"""Direct Method: Provides direct function to calculate
@@ -69,9 +93,9 @@ class DirectMethod():
 		"""Returns reduced temperature (class property)."""
 		return self.temp/self.tcrit
 
-	def preduced(self,press:numpy.ndarray):
+	def preduced(self,press:np.ndarray):
 		"""Returns reduced pressure values for input pressure values in psi."""
-		return numpy.asarray(press)/self.pcrit
+		return np.asarray(press)/self.pcrit
 
 	@staticmethod
 	def get_a(treduced):
@@ -83,7 +107,7 @@ class DirectMethod():
 
 	@staticmethod
 	def get_c(treduced):
-		return (0.132-0.32*numpy.log10(treduced))
+		return (0.132-0.32*np.log10(treduced))
 
 	@staticmethod
 	def get_d(treduced):
@@ -94,7 +118,7 @@ class DirectMethod():
 		# e is defined as the derivative of b w.r.t Pr
 		return (0.62-0.23*treduced)+(0.132/(treduced-0.86)-0.074)*preduced+1.92*preduced**5/(10**(9*(treduced-1)))
 
-	def __call__(self,press:numpy.ndarray,derivative:bool=False):
+	def __call__(self,press:np.ndarray,derivative:bool=False):
 
 		preduced = self.preduced(press)
 
@@ -108,8 +132,8 @@ class DirectMethod():
 
 	def zvalue(self,preduced,b):
 		"""Internal function to calculate z factor when the class is called."""
-		return self.a+(1-self.a)*numpy.exp(-b)+self.c*preduced**self.d
+		return self.a+(1-self.a)*np.exp(-b)+self.c*preduced**self.d
 
 	def zprime(self,preduced,b,e):
 		"""Internal function to calculate z prime when the class is called."""
-		return (self.a-1)*numpy.exp(-b)*e+self.c*self.d*preduced**(self.d-1)
+		return (self.a-1)*np.exp(-b)*e+self.c*self.d*preduced**(self.d-1)

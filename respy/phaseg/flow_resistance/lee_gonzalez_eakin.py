@@ -1,5 +1,20 @@
 import numpy
 
+def gvisc(P, T, Z, grav):
+    """Function to Calculate Gas Viscosity in cp"""
+    #P          pressure, psia
+    #T          temperature, °R
+    #Z          gas compressibility factor
+    #grav       gas specific gravity
+    M = 28.964 * grav
+    x = 3.448 + 986.4 / T + 0.01009 * M
+    Y = 2.447 - 0.2224 * x
+    rho = (1.4926 / 1000) * P * M / Z / T
+    if Y<0 or rho<0:
+       print ('epa')
+    K = (9.379 + 0.01607 * M) * T ** 1.5 / (209.2 + 19.26 * M + T)
+    return K * math.exp(x * rho ** Y) / 10000
+
 class LeeGonzalezEakin():
     """Lee-Gonzalez-Eakin Method"""
     
