@@ -1,4 +1,6 @@
-class Marhoun:
+from ._crude_oil_system import CrudeOilSystem
+
+class Marhoun(CrudeOilSystem):
 
 	def gas_solubility(T,p,api,gg):
 		"""

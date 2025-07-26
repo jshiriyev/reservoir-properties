@@ -1,6 +1,8 @@
 import numpy as np
 
-class VasquezBeggs:
+from ._crude_oil_system import CrudeOilSystem
+
+class VasquezBeggs(CrudeOilSystem):
 
 	@staticmethod
 	def gas_solubility(T,p,API,gg,Tsep,psep):

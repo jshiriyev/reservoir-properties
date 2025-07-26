@@ -1,4 +1,6 @@
-class PetroskyFarshad:
+from ._crude_oil_system import CrudeOilSystem
+
+class PetroskyFarshad(CrudeOilSystem):
 
 	@staticmethod
 	def gas_solubility(T,p,API,gg)
