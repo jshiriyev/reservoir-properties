@@ -21,6 +21,16 @@ def vasquez_beggs(T,p,API,gg,Tsep,psep):
 	psep = actual separator pressure, psia
 	Tsep = actual separator temperature, °F
 
+	The gas gravity used to develop all the correlations reported by the
+	authors was that which would result from a two-stage separation. The
+	first-stage pressure was chosen as 100 psig and the second stage was the
+	stock tank. If the separator conditions are unknown, the unadjusted gas
+	gravity may be used.
+
+	An independent evaluation of the above correlation by Sutton and
+	Farashad (1984) shows that the correlation is capable of predicting gas
+	solubilities with an average absolute error of 12.7%.
+
 	"""
 	if API<30:
 		C1 = 0.0362
@@ -31,17 +41,16 @@ def vasquez_beggs(T,p,API,gg,Tsep,psep):
 		C2 = 1.1870
 		C3 = 23.931
 
-	ggs = gg*(1+5.912e-5*API*Tsep*np.log10((psep+14.7)/114.7))
-
-	print(f"\n{ggs=}")
+	ggs = gg*(1+5.912e-5*API*Tsep*np.log10(psep/114.7))
+	# print(f"\n{ggs=}")
 
 	return C1*ggs*(p+14.7)**C2*np.exp(C3*API/(T+460))
 
 if __name__ == "__main__":
 
-	print(vasquez_beggs(250,2377,47.1,0.851, 60,150))
-	print(vasquez_beggs(220,2620,40.7,0.855, 75,100))
-	print(vasquez_beggs(260,2051,48.6,0.911, 72,100))
-	print(vasquez_beggs(237,2884,40.5,0.898,120, 60))
-	print(vasquez_beggs(218,3045,44.2,0.781, 60,200))
-	print(vasquez_beggs(180,4239,27.3,0.848,173, 85))
+	print(vasquez_beggs(250,2377,47.1,0.851, 60,150+14.7))
+	print(vasquez_beggs(220,2620,40.7,0.855, 75,100+14.7))
+	print(vasquez_beggs(260,2051,48.6,0.911, 72,100+14.7))
+	print(vasquez_beggs(237,2884,40.5,0.898,120, 60+14.7))
+	print(vasquez_beggs(218,3045,44.2,0.781, 60,200+14.7))
+	print(vasquez_beggs(180,4239,27.3,0.848,173, 85+14.7))

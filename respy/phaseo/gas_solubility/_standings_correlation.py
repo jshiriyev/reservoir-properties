@@ -21,17 +21,17 @@ def standing(T,p,API,gg):
 
 	"""
 	x = 0.0125 * API - 0.00091 * T
-	print(f"\n{x=}")
+	# print(f"\n{x=}")
 
-	Rs = gg*(((p+14.7)/18.2+1.4)*10**x)**1.20482
+	Rs = gg*((p/18.2+1.4)*10**x)**1.20482
 
 	return Rs
 
 if __name__ == "__main__":
 
-	print(standing(250,2377,47.1,0.851))
-	print(standing(220,2620,40.7,0.855))
-	print(standing(260,2051,48.6,0.911))
-	print(standing(237,2884,40.5,0.898))
-	print(standing(218,3045,44.2,0.781))
-	print(standing(180,4239,27.3,0.848))
+	print(standing(250,2377+14.7,47.1,0.851))
+	print(standing(220,2620+14.7,40.7,0.855))
+	print(standing(260,2051+14.7,48.6,0.911))
+	print(standing(237,2884+14.7,40.5,0.898))
+	print(standing(218,3045+14.7,44.2,0.781))
+	print(standing(180,4239+14.7,27.3,0.848))
