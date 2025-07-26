@@ -32,3 +32,8 @@ necessary for the petroleum engineer to determine the properties from
 empirically derived correlations.
 
 """
+# from ._standings_correlation import Standing
+# from ._vasquez_beggs_correlation import VasquezBeggs
+# from ._glasos_correlation import Glaso
+# from ._marhouns_correlation import Marhoun
+# from ._petrosky_farshad_correlation import PetroskyFarshad

@@ -1,7 +1,9 @@
-class GasSolubility():
+import numpy as np
+
+class MaterialBalance():
 
 	@staticmethod
-	def get(rho,fvf,api,gg):
+	def gas_solubility(rho,fvf,api,gg):
 		"""
 		The gas solubility can also be calculated rigorously from the experimental
 		measured PVT data at the specified pressure and temperature.
