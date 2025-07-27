@@ -1,9 +1,11 @@
 import numpy as np
 
+from _crude_oil_system import CrudeOilSystem as cos
+
 class VasquezBeggs:
 
 	@staticmethod
-	def gass(T,p,API,gg,Tsep,psep):
+	def gass(T:float,p:np.ndarray,API:float,gg:float,Tsep:float=None,psep:float=None):
 		"""
 		Vasquez and Beggs (1980) presented an improved empirical correlation
 		for estimating Rs. The correlation was obtained by regression analysis
@@ -11,21 +13,23 @@ class VasquezBeggs:
 
 		Based on oil gravity, the measured data were divided into two groups.
 		This division was made at a value of oil gravity of 30°API.
+		
+		Inputs:
+		------
+		T		: System temperature, °F
+		p		: System pressure, psia
+		API 	: API gravity of oil, dimensionless
+		gg 		: Solution gas specific gravity
 
-		T		  temperature, °F
-		P		  pressure, psia
-		Tsep	   separator temperature, °F
-		Psep	   separator pressure, psia
-		Pb		 bubble point pressure, psia
-		gas_grav   gas specific gravity
-		oil_grav   API oil gravity
+		Tsep	: Separator temperature, °F
+		psep	: Separator pressure, psia
 
 		An independent evaluation of the above correlation by Sutton and
 		Farashad (1984) shows that the correlation is capable of predicting gas
 		solubilities with an average absolute error of 12.7%.
 
 		"""
-		if API<30:
+		if API<=30:
 			C1 = 0.0362
 			C2 = 1.0937
 			C3 = 25.7240
@@ -34,80 +38,63 @@ class VasquezBeggs:
 			C2 = 1.1870
 			C3 = 23.931
 
-		ggs = gg*(1+5.912e-5*API*Tsep*np.log10(psep/114.7))
-		# print(f"\n{ggs=}")
+		if Tsep and psep:
+			gg = cos.gas_correction(Tsep,psep,API,gg)
 
-		# gas_grav_corr = correct(Tsep, Psep, gas_grav, oil_grav)
-
-		# if (P <= Pb):
-		#	 Rs = C1 * gas_grav_corr * P** C2 * math.exp(C3 * oil_grav / (T + 460))
-		# else:
-		#	 Rs = C1 * gas_grav_corr * Pb ** C2 * math.exp(C3 * oil_grav / (T + 460))
-
-		return C1*ggs*(p+14.7)**C2*np.exp(C3*API/(T+460))
+		return C1*gg*p**C2*np.exp(C3*API/(T+460))
 
 	@staticmethod
-	def bpp(T, Tsep, Psep, gas_grav, oil_grav, GOR):
-		""" CFunction to Calculate Bubble Point Pressure in psia using Standing Correlation"""
-		#T		  temperature, °F
-		#Tsep	   separator temperature, °F
-		#Psep	   separator pressure, psia
-		#gas_grav   gas specific gravity
-		#oil_grav   API oil gravity
-		#GOR		producing gas-oil ratio, scf/stb
-		gas_grav_corr = correct(Tsep, Psep, gas_grav, oil_grav)
-		if (oil_grav<= 30) :
-			C1 = 0.0362
-			C2 = 1.0937
-			C3 = 25.724
-		else:
-			C1 = 0.0178
-			C2 = 1.187
-			C3 = 23.931
+	def bpp(T:float,API:float,gg:float,Rsb:float,Tsep:float=None,psep:float=None):
+		"""
+		Vasquez and Beggs’ gas solubility correlation can be solved for the
+		bubble-point pressure that will require the following inputs:
 		
-		Pbubl = (GOR / (C1 * gas_grav_corr * math.exp(C3 * oil_grav / (T + 460)))) **(1 / C2)
-		return Pbubl
+		Inputs:
+		------
+		T	 : System temperature, °F
+		API  : API oil gravity, dimensionless
+		gg	 : Specific gravity of the separator gas
+		Rsb	 : Gas solubility at the bubble-point pressure, scf/STB
 
-    # def get_isothermal_compressibility(self):
-    # 18. isothermal compressibility coefficient of crude oil
-    def comp(T, P, Tsep, Psep, Rs, gas_grav, oil_grav):
-        """Function to Calculate Oil Isothermal Compressibility in 1/psi"""
-        #'T          temperature, °F
-        #'P          pressure, psia
-        #'Tsep       separator temperature, °F
-        #'Psep       separator pressure, psia
-        #'Rs         solution gas-oil ratio, scf/stb
-        #'gas_grav   gas specific gravity
-        #'oil_grav   API oil gravity
+		Tsep : Separator temperature, °F
+		psep : Separator pressure, psia
 
-        # A1 =  -1_433.0
-        # A2 =       5.0
-        # A3 =      17.2
-        # A4 =  -1_180.0
-        # A5 =      12.61
-        # A6 = 100_000.0
+		"""
+		if API<=30:
+			C1 = 27.624
+			C2 = 0.914328
+			C3 = 11.172
+		else:
+			C1 = 56.18
+			C2 = 0.84246
+			C3 = 10.393
 
-        # return (A1+A2*Rs+A3*temp+A4*gamma_gas+A5*gamma_API)/(A6*pres)
-        
-        gas_grav_corr = correct(Tsep, Psep, gas_grav, oil_grav)
-        oil_compr = (5 * Rs + 17.2 * T - 1180 * gas_grav_corr + 12.61 * oil_grav - 1433) / (P * 10 ** 5)
-        return oil_compr
+		if Tsep and psep:
+			gg = cos.gas_correction(Tsep,psep,API,gg)
+		
+		a = -C3*API/T
 
-   	# def get_fvf(self):
-	# 17. oil formation volume factor
-	# 19. oil formation volume factor for undersaturated oils
-	def fvf(T, P, Tsep, Psep, Pb, Rs, gas_grav, oil_grav):
-		"""Function to Calculate Oil Formation Volume Factor in bbl/stb"""
-		#'T		  temperature, °F
-		#P		  pressure, psia
-		#Tsep	   separator temperature, °F
-		#Psep	   separator pressure, psia
-		#Pb		 bubble point pressure, psia
-		#Rs		 solution gas-oil ratio, scf/stb
-		#gas_grav   gas specific gravity
-		#oil_grav   API oil gravity
-		gas_grav_corr = correct(Tsep, Psep, gas_grav, oil_grav)
-		if (oil_grav <= 30) :
+		# return (Rs / (C1 * gg * math.exp(C3 * API / (T + 460)))) **(1 / C2)
+		return (C1*Rsb/gg*10**a)**C2
+
+	def fvf(T,p,Tsep,psep,Pb,Rs,gg,API):
+		"""Function to Calculate Oil Formation Volume Factor in bbl/stb
+		
+		Inputs:
+		------
+		T		temperature, °F
+		p		pressure, psia
+		Tsep	separator temperature, °F
+		psep	separator pressure, psia
+		Pb		bubble point pressure, psia
+		Rs		solution gas-oil ratio, scf/stb
+		API 	API oil gravity
+		gg   	gas specific gravity
+
+		"""
+		gg_corr = correct(Tsep, psep, gg, API)
+
+		if (API <= 30) :
 			C1 = 0.0004677
 			C2 = 1.751E-05
 			C3 = -1.811E-08
@@ -117,13 +104,42 @@ class VasquezBeggs:
 			C3 = 1.337E-09
 		
 		if (P <= Pb):
-			Bo = 1 + C1 * Rs + C2 * (T - 60) * (oil_grav / gas_grav_corr) + C3 * Rs * (T - 60) * (oil_grav / gas_grav_corr)
+			Bo = 1 + C1 * Rs + C2 * (T - 60) * (API / gg_corr) + C3 * Rs * (T - 60) * (API / gg_corr)
 		else:
-			Bob = 1 + C1 * Rs + C2 * (T - 60) * (oil_grav / gas_grav_corr)+ C3 * Rs * (T - 60) * (oil_grav / gas_grav_corr)
-			co = oil_comp(T, P, Tsep, Psep, Rs, gas_grav, oil_grav)
+			Bob = 1 + C1 * Rs + C2 * (T - 60) * (API / gg_corr)+ C3 * Rs * (T - 60) * (API / gg_corr)
+			co = oil_comp(T, P, Tsep, psep, Rs, gg, API)
 			Bo = Bob * math.exp(co * (Pb - P))
 		
 		return  Bo
+
+	def comp(T,p,Tsep,psep,Rs,gg,API):
+		"""Function to Calculate Oil Isothermal Compressibility in 1/psi
+		
+		Inputs:
+		------
+		T 		temperature, °F
+		p 		pressure, psia
+		Tsep	separator temperature, °F
+		psep	separator pressure, psia
+		Rs 		solution gas-oil ratio, scf/stb
+		API   	API oil gravity
+		gg   	gas specific gravity
+
+		"""
+		# A1 =  -1_433.0
+		# A2 =	   5.0
+		# A3 =	  17.2
+		# A4 =  -1_180.0
+		# A5 =	  12.61
+		# A6 = 100_000.0
+
+		# return (A1+A2*Rs+A3*temp+A4*gamma_gas+A5*gamma_API)/(A6*pres)
+		
+		gg_corr = correct(Tsep, psep, gg, API)
+
+		oil_compr = (5 * Rs + 17.2 * T - 1180 * gg_corr + 12.61 * API - 1433) / (P * 10 ** 5)
+
+		return oil_compr
 		
 if __name__ == "__main__":
 
