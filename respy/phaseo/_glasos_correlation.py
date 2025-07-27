@@ -1,8 +1,6 @@
 import numpy as np
 
-from ._crude_oil_system import CrudeOilSystem
-
-class Glaso(CrudeOilSystem):
+class Glaso:
 
 	def gas_solubility(T,p,api,gg):
 		"""

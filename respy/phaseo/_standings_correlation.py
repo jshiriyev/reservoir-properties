@@ -1,8 +1,6 @@
 import numpy as np
 
-from ._crude_oil_system import CrudeOilSystem
-
-class Standing(CrudeOilSystem):
+class Standing:
 
 	@staticmethod
 	def gass(T:float,p:np.ndarray,API:float,gg:float):
@@ -30,7 +28,6 @@ class Standing(CrudeOilSystem):
 
 		"""
 		x = 0.0125*API-0.00091*T
-		# print(f"\n{x=}")
 
 		Cpb = p/18.2+1.4
 
@@ -39,14 +36,16 @@ class Standing(CrudeOilSystem):
 		return Rs
 
 	@staticmethod
-	def bpp(T,API,gg,Rs):
+	def bpp(T:float,API:float,gg:float,Rsb:float):
 		"""
 		Calculates the bubblepoint pressure of the oil at reservoir conditions
 		
+		Inputs:
+		------
 		T 	: System temperature, °F
 		API : API gravity of oil, dimensionless
-		gg	: specific gravity of the separator gas
-		Rs	: solution GOR including stock-tank vent gas
+		gg	: Specific gravity of the separator gas
+		Rsb	: Gas solubility at the bubble-point pressure, scf/STB
 
 		The equations are valid to 325F. The correlation should be used with caution
 		if nonhydrocarbon components are known to be present in the system.
@@ -54,12 +53,12 @@ class Standing(CrudeOilSystem):
 		"""
 		x = 0.00091*T-0.0125*API
 
-		Cpb = (Rs/gg)**0.83*10**x
+		Cpb = (Rsb/gg)**0.83*10**x
 
 		return 18.2*(Cpb-1.4)
 
 	@staticmethod
-	def fvf(T,API,gg,Rs):
+	def fvf(T:float,go:float,gg:float,Rs:np.ndarray):
 		"""
 		Standing (1947) presented a graphical correlation for estimating the oil
 		formation volume factor with the gas solubility, gas gravity, oil gravity,
@@ -69,36 +68,44 @@ class Standing(CrudeOilSystem):
 		points on 22 different California hydrocarbon systems. An average error
 		of 1.2% was reported for the correlation.
 		
-		Standing (1981) showed that the oil formation volume factor can be
-		expressed more conveniently in a mathematical form by the following
-		equation:
+		Standing (1981) showed that the oil formation volume factor can be expressed
+		more conveniently in a mathematical form which requires following inputs:
+
+		Inputs:
+		------
+		T 	: Temperature, °T
+		go 	: Specific gravity of the stock-tank oil
+		gg 	: Specific gravity of the solution gas
+		Rs 	: Solution GOR, scf/STB
 
 		"""
-		# def fvf(pres,temp,Rs,gamma_gas,gamma_oil):
+		CBob = Rs*(gg/go)**0.5+1.25*T
 
-        # CBob = Rs*(gamma_gas/gamma_oil)**0.5+1.25*temp
+		# oil formation volume factor at the bubble-point pressure, bbl/STB
+		Bob = 0.9759+0.00012*CBob**1.2
 
-        # Bob = 0.9759+12e-5*CBob**1.2
-
-        # return Bob*numpy.exp(co*(pbubble-pres))
-        
-		return 0.9759+0.00012*(Rs*(gg/go)**0.5+1.25*T)**1.2
+        return Bob # Bob*np.exp(-co*(p-bpp))
 
 	@staticmethod
-	def comp():
+	def comp(T:float,p:np.ndarray,go:float,gg:float,Rs:np.ndarray,fvfo:np.ndarray,fvfg:np.ndarray):
 		"""
+		It calculates compressibility based on the analytical derivation.
 
+		Inputs:
+		------
+		T 	 : Temperature, °F
+		p 	 : Pressure, psia
+		go 	 : Specific gravity of the stock-tank oil
+		gg 	 : Specific gravity of the solution gas
+		Rs 	 : Gas solubility at pressure p, scf/STB
+		fvfo : Oil formation volume factor at p, bbl/STB
+		fvfg : Gas formation volume factor at pressure p, bbl/scf
 
 		"""
-		pass
+		pRs = Rs/(0.83*p+21.75)
+		pBo = 0.000144*pRs*np.sqrt(gg/go)*(Rs*np.sqrt(gg/go)+1.25*T)**0.12
 
-	@staticmethod
-	def rho():
-		"""
-
-
-		"""
-		pass
+		return (fvfg*pRs-pBo)/fvfo
 
 if __name__ == "__main__":
 

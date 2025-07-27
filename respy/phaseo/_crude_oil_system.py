@@ -56,7 +56,7 @@ class CrudeOilSystem:
 		return 141.5/spgr-131.5
 
 	@staticmethod
-	def spgr_solg(stock_tank:tuple[float,float],*separators):
+	def spgr_solg(*separators,ST:tuple[float,float]):
 		"""
 		Calculates the specific gravity of the solution gas.
 
@@ -65,7 +65,7 @@ class CrudeOilSystem:
 
 		This weighted-average approach is based on the separator gas-oil ratio.
 		
-		The stock_tank is a tuple with Rst and gst values:
+		The ST (stock-tank) is a tuple with Rst and gst values:
 			Rst = gas-oil ratio from the stock tank, scf/ STB
 			gst = gas gravity from the stock tank
 		
@@ -78,7 +78,7 @@ class CrudeOilSystem:
 		Specific gravity of the solution gas.
 
 		"""
-		Rst,gst = stock_tank
+		Rst,gst = ST
 
 		upper = Rst*gst
 		lower = Rst
@@ -129,7 +129,7 @@ if __name__ == "__main__":
 
 	print(CrudeOilSystem.API(sg))
 
-	print(CrudeOilSystem.spgr_solg((58,1.296),(724,0.743),(202,0.956)))
+	print(CrudeOilSystem.spgr_solg((724,0.743),(202,0.956),ST=(58,1.296)))
 
 	print(CrudeOilSystem.gas_correction( 60,150+14.7,47.1,0.851))
 	print(CrudeOilSystem.gas_correction( 75,100+14.7,40.7,0.855))

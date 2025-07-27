@@ -1,7 +1,9 @@
+import numpy as np
+
 class GasOilInterfacialTension:
 	
 	# 25. surface/interfacial tension
-	def oil_tens(P, T, oil_grav):
+	def tens(P, T, oil_grav):
 		"""Function to Calculate Gas-Oil Interfacial Tension in dynes/cm"""
 		#P          pressure, psia
 		#T          temperature, °F

@@ -1,8 +1,9 @@
-from ._crude_oil_system import CrudeOilSystem
+import numpy as np
 
-class Marhoun(CrudeOilSystem):
+class Marhoun:
 
-	def gas_solubility(T,p,api,gg):
+	@staticmethod
+	def gass(T,p,api,gg):
 		"""
 		Marhoun (1988) developed an expression for estimating the saturation
 		pressure of the Middle Eastern crude oil systems. The correlation originates

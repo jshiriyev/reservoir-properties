@@ -1,9 +1,9 @@
-from ._crude_oil_system import CrudeOilSystem
+import numpu as np
 
-class PetroskyFarshad(CrudeOilSystem):
+class PetroskyFarshad:
 
 	@staticmethod
-	def gas_solubility(T,p,API,gg)
+	def gass(T,p,API,gg)
 		"""
 		Petrosky and Farshad (1993) used a nonlinear multiple regression software
 		to develop a gas solubility correlation. The authors constructed a

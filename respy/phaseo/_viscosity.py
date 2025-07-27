@@ -5,7 +5,7 @@ class Viscosity:
     # 22. methods of calculating the dead oil viscosity
     # 23. methods of calculating the saturated oil viscosity
     # 24. methods of calculating the viscosity of the undersaturated oil
-    def oil_visc(T, P, Tsep, Psep, Pb, Rs, gas_grav, oil_grav):
+    def oil(T, P, Tsep, Psep, Pb, Rs, gas_grav, oil_grav):
         """Function to Calculate Oil Viscosity in cp"""
         #'T          temperature, °F
         #'P          pressure, psia

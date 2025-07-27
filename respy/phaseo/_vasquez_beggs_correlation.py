@@ -1,11 +1,9 @@
 import numpy as np
 
-from ._crude_oil_system import CrudeOilSystem
-
-class VasquezBeggs(CrudeOilSystem):
+class VasquezBeggs:
 
 	@staticmethod
-	def gas_solubility(T,p,API,gg,Tsep,psep):
+	def gass(T,p,API,gg,Tsep,psep):
 		"""
 		Vasquez and Beggs (1980) presented an improved empirical correlation
 		for estimating Rs. The correlation was obtained by regression analysis
