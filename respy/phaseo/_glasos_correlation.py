@@ -1,8 +1,10 @@
 import numpy as np
 
+from ._crude_oil_system import CrudeOilSystem as cos
+
 class Glaso:
 
-	def gas_solubility(T,p,api,gg):
+	def gass(T,p,api,gg):
 		"""
 		Glaso (1980) proposed a correlation for estimating the gas solubility as
 		a function of the API gravity, pressure, temperature, and gas specific gravity.

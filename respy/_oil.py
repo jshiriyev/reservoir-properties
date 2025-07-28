@@ -6,7 +6,34 @@ from .phaseo._crude_oil_system import CrudeOilSystem
 
 class phaseo(CrudeOilSystem):
 
-    def gass(self,):
+    def __init__(self,T,API,sgsg):
+
+        self._T     = T
+        self._API   = API
+        self._sgsg  = sgsg
+
+    @property
+    def T(self):
+        return self._T
+
+    @property
+    def API(self):
+        return self._API
+    
+    @property
+    def sgsg(self):
+        return self._sgsg
+
+    @property
+    def gassb(self):
+        return self._gassb
+
+    @gassb.setter
+    def gassb(self,value):
+        self._gassb = gassb
+        self._bbp = bbp
+    
+    def gass(self,p:np.ndarray,method="",**kwargs):
         """
         The gas solubility Rs is defined as the number of standard cubic feet of
         gas which will dissolve in one stock-tank barrel of crude oil at certain
@@ -29,6 +56,7 @@ class phaseo(CrudeOilSystem):
         - As the pressure is reduced from the initial reservoir pressure pi, to the
         bubble-point pressure pb, no gas evolves from the oil and consequently the gas
         solubility remains constant at its maximum value of Rsb.
+        
         - Below the bubble-point pressure, the solution gas is liberated and the
         value of Rs decreases with pressure.
 
@@ -60,7 +88,11 @@ class phaseo(CrudeOilSystem):
 
         return method_instance(pressures,derivative)
 
-    def rho(T,p,bpp,Bo,Rs,API,gg,Tsep,psep):
+    def fvf(self):
+
+        pass
+
+    def rho(T,p,Bo,Rs,API,gg,Tsep,psep):
         """
         The crude oil density is defined as the mass of a unit volume of the
         crude at a specified pressure and temperature. It is usually expressed in
@@ -93,3 +125,11 @@ class phaseo(CrudeOilSystem):
             rho_o = rho_ob * Bo / Bob
         
         return rho_o
+
+    def comp(self):
+
+        pass
+
+    def visc(self):
+
+        pass

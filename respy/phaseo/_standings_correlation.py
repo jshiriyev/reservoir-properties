@@ -1,11 +1,33 @@
 import numpy as np
 
-from _crude_oil_system import CrudeOilSystem as cos
+from ._crude_oil_system import CrudeOilSystem as cos
 
 class Standing:
 
 	@staticmethod
-	def gass(T:float,p:np.ndarray,API:float,gg:float):
+	def bpp(T:float,API:float,sgsg:float,Rsb:float):
+		"""
+		Calculates the bubblepoint pressure of the oil at reservoir conditions
+		
+		Inputs:
+		------
+		T 	 : System temperature, °F
+		API  : API gravity of oil, dimensionless
+		sgsg : Specific gravity of the separator gas
+		Rsb	 : Gas solubility at the bubble-point pressure, scf/STB
+
+		The equations are valid to 325F. The correlation should be used with caution
+		if nonhydrocarbon components are known to be present in the system.
+
+		"""
+		x = 0.00091*T-0.0125*API
+
+		Cpb = (Rsb/sgsg)**0.83*10**x
+
+		return 18.2*(Cpb-1.4)
+
+	@staticmethod
+	def gass(T:float,p:np.ndarray,API:float,sgsg:float):
 		"""
 		Standing (1947) proposed a graphical correlation for determining the
 		gas solubility as a function of pressure, gas specific gravity, API gravity,
@@ -20,10 +42,10 @@ class Standing:
 		
 		Inputs:
 		------
-		T 	: System temperature, °F
-		p 	: System pressure, psia
-		API : API gravity of oil, dimensionless
-		gg 	: Solution gas specific gravity
+		T 	 : System temperature, °F
+		p 	 : System pressure, psia
+		API  : API gravity of oil, dimensionless
+		sgsg : Solution gas specific gravity
 
 		It should be noted that Standing’s equation is valid for applications at
 		and below the bubble-point pressure of the crude oil.
@@ -33,34 +55,12 @@ class Standing:
 
 		Cpb = p/18.2+1.4
 
-		Rs = gg*(Cpb*10**x)**1.20482
+		Rs = sgsg*(Cpb*10**x)**1.20482
 
 		return Rs
 
 	@staticmethod
-	def bpp(T:float,API:float,gg:float,Rsb:float):
-		"""
-		Calculates the bubblepoint pressure of the oil at reservoir conditions
-		
-		Inputs:
-		------
-		T 	: System temperature, °F
-		API : API gravity of oil, dimensionless
-		gg	: Specific gravity of the separator gas
-		Rsb	: Gas solubility at the bubble-point pressure, scf/STB
-
-		The equations are valid to 325F. The correlation should be used with caution
-		if nonhydrocarbon components are known to be present in the system.
-
-		"""
-		x = 0.00091*T-0.0125*API
-
-		Cpb = (Rsb/gg)**0.83*10**x
-
-		return 18.2*(Cpb-1.4)
-
-	@staticmethod
-	def fvf(T:float,API:float,gg:float,Rs:np.ndarray):
+	def fvf(T:float,API:float,sgsg:float,Rs:np.ndarray):
 		"""
 		Standing (1947) presented a graphical correlation for estimating the oil
 		formation volume factor with the gas solubility, gas gravity, oil gravity,
@@ -75,15 +75,15 @@ class Standing:
 
 		Inputs:
 		------
-		T 	: Temperature, °T
-		API : API gravity of oil, dimensionless
-		gg 	: Specific gravity of the solution gas
-		Rs 	: Solution GOR, scf/STB
+		T 	 : Temperature, °T
+		API  : API gravity of oil, dimensionless
+		sgsg : Specific gravity of the solution gas
+		Rs 	 : Solution GOR, scf/STB
 
 		"""
 		go = cos.API2spgr(API)
 
-		CBob = Rs*(gg/go)**0.5+1.25*T
+		CBob = Rs*(sgsg/go)**0.5+1.25*T
 
 		# oil formation volume factor at the bubble-point pressure, bbl/STB
 		Bob = 0.9759+0.00012*CBob**1.2
@@ -91,7 +91,7 @@ class Standing:
         return Bob # Bob*np.exp(-co*(p-bpp))
 
 	@staticmethod
-	def comp(T:float,p:np.ndarray,API:float,gg:float,Rs:np.ndarray,fvfo:np.ndarray,fvfg:np.ndarray):
+	def comp(T:float,p:np.ndarray,API:float,sgsg:float,Rs:np.ndarray,fvfo:np.ndarray,fvfg:np.ndarray):
 		"""
 		It calculates compressibility based on the analytical derivation.
 
@@ -100,7 +100,7 @@ class Standing:
 		T 	 : Temperature, °F
 		p 	 : Pressure, psia
 		API	 : API gravity of oil, dimensionless
-		gg 	 : Specific gravity of the solution gas
+		sgsg : Specific gravity of the solution gas
 		Rs 	 : Gas solubility at pressure p, scf/STB
 
 		fvfo : Oil formation volume factor at p, bbl/STB
@@ -110,7 +110,7 @@ class Standing:
 		go = cos.API2spgr(API)
 
 		pRs = Rs/(0.83*p+21.75)
-		pBo = 0.000144*pRs*np.sqrt(gg/go)*(Rs*np.sqrt(gg/go)+1.25*T)**0.12
+		pBo = 0.000144*pRs*np.sqrt(sgsg/go)*(Rs*np.sqrt(sgsg/go)+1.25*T)**0.12
 
 		return (fvfg*pRs-pBo)/fvfo
 

@@ -11,12 +11,11 @@ class CrudeOilSystem:
 	and minor constituents present.
 
 	"""
-
 	@staticmethod
-	def spgr(rhoo:float|np.ndarray,rhow:float=62.4):
+	def get_sgco(rhoo:float|np.ndarray,rhow:float=62.4):
 		"""
-		The specific gravity of a crude oil is defined as the ratio of the
-		density of the oil to that of water. Both densities are measured
+		The specific gravity of a crude oil (sgco) is defined as the ratio
+		of the density of the oil to that of water. Both densities are measured
 		at 60°F and atmospheric pressure:
 
 		Inputs:
@@ -37,13 +36,13 @@ class CrudeOilSystem:
 		return rhoo/rhow
 
 	@staticmethod
-	def spgr2API(spgr:float|np.ndarray):
+	def sgco_to_API(sgco:float|np.ndarray):
 		"""
 		Calculates API gravity from specific gravity:
 		
 		Inputs:
 		------
-		spgr	: specific gravity of the oil
+		sgco	: specific gravity of the oil
 
 		Returns:
 		-------
@@ -53,10 +52,10 @@ class CrudeOilSystem:
 		lighter crude oils to 10° API for the heavier asphaltic crude oils.
 
 		"""
-		return 141.5/spgr-131.5
+		return 141.5/sgco-131.5
 
 	@staticmethod
-	def API2spgr(API:float|np.ndarray):
+	def API_to_sgco(API:float|np.ndarray):
 		"""
 		Calculates specific gravity from API gravity:
 		
@@ -72,11 +71,11 @@ class CrudeOilSystem:
 		return 141.5/(API+131.5)
 
 	@staticmethod
-	def spgr_solg(*separators,ST:tuple[float,float]):
+	def get_sgsg(*separators,ST:tuple[float,float]):
 		"""
 		Calculates the specific gravity of the solution gas.
 
-		The specific gravity of the solution gas is described by the weighted
+		The specific gravity of the solution gas (sgsg) is described by the weighted
 		average of the specific gravities of the separated gas from each separator.
 
 		This weighted-average approach is based on the separator gas-oil ratio.
@@ -109,16 +108,9 @@ class CrudeOilSystem:
 
 if __name__ == "__main__":
 
-	sg = CrudeOilSystem.spgr(53)
-	print(sg)
+	sgco = CrudeOilSystem.sgco(53)
+	print(sgco)
 
-	print(CrudeOilSystem.API(sg))
+	print(CrudeOilSystem.sgco2API(sgco))
 
-	print(CrudeOilSystem.spgr_solg((724,0.743),(202,0.956),ST=(58,1.296)))
-
-	print(CrudeOilSystem.gg_corr( 60,150+14.7,47.1,0.851))
-	print(CrudeOilSystem.gg_corr( 75,100+14.7,40.7,0.855))
-	print(CrudeOilSystem.gg_corr( 72,100+14.7,48.6,0.911))
-	print(CrudeOilSystem.gg_corr(120, 60+14.7,40.5,0.898))
-	print(CrudeOilSystem.gg_corr( 60,200+14.7,44.2,0.781))
-	print(CrudeOilSystem.gg_corr(173, 85+14.7,27.3,0.848))
+	print(CrudeOilSystem.sgsg((724,0.743),(202,0.956),ST=(58,1.296)))

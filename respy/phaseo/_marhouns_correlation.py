@@ -1,5 +1,7 @@
 import numpy as np
 
+from ._crude_oil_system import CrudeOilSystem as cos
+
 class Marhoun:
 
 	@staticmethod
