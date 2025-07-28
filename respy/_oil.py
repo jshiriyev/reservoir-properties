@@ -1,8 +1,8 @@
-import os, sys
+import os,sys
 
 import numpy as np
 
-from ._crude_oil_system import CrudeOilSystem
+from .phaseo._crude_oil_system import CrudeOilSystem
 
 class phaseo(CrudeOilSystem):
 
@@ -60,17 +60,7 @@ class phaseo(CrudeOilSystem):
 
         return method_instance(pressures,derivative)
 
-    def rho(pres):
-        
-        rhor = (rhoSTO+0.01357*Rs*gamma_gas)/fvf
-
-        return rhob*numpy.exp(comp*(pres-pbubble))
-
-    #print(rho(150,2500,65,90,2500,1.23,300,.65,35))
-
-    # def get_density(self):
-    # 20. crude oil density
-    def rho(T, P, Tsep, Psep, Pb, Bo, Rs, gas_grav, oil_grav):
+    def rho(T,p,bpp,Bo,Rs,API,gg,Tsep,psep):
         """
         The crude oil density is defined as the mass of a unit volume of the
         crude at a specified pressure and temperature. It is usually expressed in
@@ -84,17 +74,22 @@ class phaseo(CrudeOilSystem):
         #'Pb         bubble point pressure, psia
         #'Bo         oil formation volume factor, bbl/stb
         #'Rs         solution gas-oil ratio, scf/stb
-        #'gas_grav   gas specific gravity
-        #'oil_grav   API oil gravity
+        #'gg   gas specific gravity
+        #'API   API oil gravity
 
         """
-        oil_grav_sp = 141.5 / (oil_grav + 131.5)
+        # rhor = (rhoSTO+0.01357*Rs*gamma_gas)/fvf
+        # return rhob*numpy.exp(comp*(pres-pbubble))
+        #print(rho(150,2500,65,90,2500,1.23,300,.65,35))
+
+        API_sp = 141.5 / (API + 131.5)
+
         if (P <= Pb):
-            rho_o = (350 * oil_grav_sp + 0.0764 * gas_grav * Rs) / (5.615 * Bo)
+            rho_o = (350 * API_sp + 0.0764 * gg * Rs) / (5.615 * Bo)
         else:
-            co = oil_comp(T, P, Tsep, Psep, Rs, gas_grav, oil_grav)
+            co = oil_comp(T, P, Tsep, Psep, Rs, gg, API)
             Bob = Bo / (math.exp(co * (P - Pb)))
-            rho_ob = (350 * oil_grav_sp + 0.0764 * gas_grav * Rs) / (5.615 * Bob)
+            rho_ob = (350 * API_sp + 0.0764 * gg * Rs) / (5.615 * Bob)
             rho_o = rho_ob * Bo / Bob
         
         return rho_o

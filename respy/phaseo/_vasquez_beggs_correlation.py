@@ -5,6 +5,37 @@ from _crude_oil_system import CrudeOilSystem as cos
 class VasquezBeggs:
 
 	@staticmethod
+	def ggcorr(Tsep,psep,API,gg):
+		"""Method to calculate corrected gas gravity:
+
+		Realizing that the value of the specific gravity of the gas depends on
+		the conditions under which it is separated from the oil, Vasquez and
+		Beggs proposed that the value of the gas specific gravity as obtained
+		from a separator pressure of 100 psig be used in the above equation. This
+		reference pressure was chosen because it represents the average field
+		separator conditions.
+		
+		Inputs:
+		------
+		Tsep	: Actual separator temperature, °F
+		psep	: Actual separator pressure, psia
+		API	 	: API oil gravity
+		gg	  	: Gas gravity at the actual separator conditions of psep and Tsep
+
+		Returns:
+		-------
+		Gas gravity at the reference separator pressure
+
+		The gas gravity used to develop all the correlations reported by the
+		authors was that which would result from a two-stage separation. The
+		first-stage pressure was chosen as 100 psig and the second stage was the
+		stock tank. If the separator conditions are unknown, the unadjusted gas
+		gravity may be used.
+
+		"""
+		return gg*(1+5.912e-5*API*Tsep*np.log10(psep/(100+14.7)))
+
+	@staticmethod
 	def gass(T:float,p:np.ndarray,API:float,gg:float,Tsep:float=None,psep:float=None):
 		"""
 		Vasquez and Beggs (1980) presented an improved empirical correlation
@@ -29,7 +60,7 @@ class VasquezBeggs:
 		solubilities with an average absolute error of 12.7%.
 
 		"""
-		if API<=30:
+		if API<=30.:
 			C1 = 0.0362
 			C2 = 1.0937
 			C3 = 25.7240
@@ -39,7 +70,7 @@ class VasquezBeggs:
 			C3 = 23.931
 
 		if Tsep and psep:
-			gg = cos.gas_correction(Tsep,psep,API,gg)
+			gg = VasquezBeggs.ggcorr(Tsep,psep,API,gg)
 
 		return C1*gg*p**C2*np.exp(C3*API/(T+460))
 
@@ -60,7 +91,7 @@ class VasquezBeggs:
 		psep : Separator pressure, psia
 
 		"""
-		if API<=30:
+		if API<=30.:
 			C1 = 27.624
 			C2 = 0.914328
 			C3 = 11.172
@@ -70,76 +101,74 @@ class VasquezBeggs:
 			C3 = 10.393
 
 		if Tsep and psep:
-			gg = cos.gas_correction(Tsep,psep,API,gg)
+			gg = VasquezBeggs.ggcorr(Tsep,psep,API,gg)
 		
 		a = -C3*API/T
 
 		# return (Rs / (C1 * gg * math.exp(C3 * API / (T + 460)))) **(1 / C2)
 		return (C1*Rsb/gg*10**a)**C2
 
-	def fvf(T,p,Tsep,psep,Pb,Rs,gg,API):
-		"""Function to Calculate Oil Formation Volume Factor in bbl/stb
+	def fvf(T:float,API:float,gg:float,Rs:np.ndarray,Tsep:float=None,psep:float=None):
+		"""Calculates Oil Formation Volume Factor in bbl/stb
+
+		Vasquez and Beggs (1980) developed a relationship for determining
+		Bo as a function of Rs, go, gg, and T. The proposed correlation was based
+		on 6,000 measurements of Bo at various pressures. Using the regression
+		analysis technique, Vasquez and Beggs found the method to
+		be the best form to reproduce the measured data
 		
 		Inputs:
 		------
-		T		temperature, °F
-		p		pressure, psia
-		Tsep	separator temperature, °F
-		psep	separator pressure, psia
-		Pb		bubble point pressure, psia
-		Rs		solution gas-oil ratio, scf/stb
-		API 	API oil gravity
-		gg   	gas specific gravity
+		T	 : temperature, °F
+		API  : API oil gravity
+		gg   : gas specific gravity
+		Rs	 : solution gas-oil ratio, scf/stb
+
+		Tsep : separator temperature, °F
+		psep : separator pressure, psia
+
+		Vasquez and Beggs reported an average error of 4.7% for the proposed
+		correlation.
 
 		"""
-		gg_corr = correct(Tsep, psep, gg, API)
-
-		if (API <= 30) :
-			C1 = 0.0004677
+		if API<=30.:
+			C1 = 4.677E-04
 			C2 = 1.751E-05
 			C3 = -1.811E-08
 		else:
-			C1 = 0.000467
-			C2 = 1.1E-05
+			C1 = 4.670E-4
+			C2 = 1.100E-05
 			C3 = 1.337E-09
-		
-		if (P <= Pb):
-			Bo = 1 + C1 * Rs + C2 * (T - 60) * (API / gg_corr) + C3 * Rs * (T - 60) * (API / gg_corr)
-		else:
-			Bob = 1 + C1 * Rs + C2 * (T - 60) * (API / gg_corr)+ C3 * Rs * (T - 60) * (API / gg_corr)
-			co = oil_comp(T, P, Tsep, psep, Rs, gg, API)
-			Bo = Bob * math.exp(co * (Pb - P))
-		
-		return  Bo
 
-	def comp(T,p,Tsep,psep,Rs,gg,API):
-		"""Function to Calculate Oil Isothermal Compressibility in 1/psi
+		if Tsep and psep:
+			gg = VasquezBeggs.ggcorr(Tsep,psep,API,gg)
+		
+		return 1.+C1*Rs+(T-60)*(API/gg)*(C2+C3*Rs)
+		
+	def comp(T:float,p:np.ndarray,API:float,gg:float,Rsb:float,Tsep:float=None,psep:float=None):
+		"""Calculates oil isothermal compressibility in 1/psi
+
+		From a total of 4,036 experimental data points used in a linear regression
+		model, Vasquez and Beggs (1980) correlated the isothermal oil compressibility
+		coefficients with Rsb, T, °API, gg, and p. They proposed the
+		following expression:
 		
 		Inputs:
 		------
-		T 		temperature, °F
-		p 		pressure, psia
-		Tsep	separator temperature, °F
-		psep	separator pressure, psia
-		Rs 		solution gas-oil ratio, scf/stb
-		API   	API oil gravity
-		gg   	gas specific gravity
+		T 	 : temperature, °F
+		p  	 : pressure, psia
+		API  : API oil gravity
+		gg   : gas specific gravity
+		Rsb  : solution gas-oil ratio, scf/stb
+
+		Tsep : separator temperature, °F
+		psep : separator pressure, psia
 
 		"""
-		# A1 =  -1_433.0
-		# A2 =	   5.0
-		# A3 =	  17.2
-		# A4 =  -1_180.0
-		# A5 =	  12.61
-		# A6 = 100_000.0
+		if Tsep and psep:
+			gg = VasquezBeggs.ggcorr(Tsep,psep,API,gg)
 
-		# return (A1+A2*Rs+A3*temp+A4*gamma_gas+A5*gamma_API)/(A6*pres)
-		
-		gg_corr = correct(Tsep, psep, gg, API)
-
-		oil_compr = (5 * Rs + 17.2 * T - 1180 * gg_corr + 12.61 * API - 1433) / (P * 10 ** 5)
-
-		return oil_compr
+		return (-1433.+5.*Rsb+17.2*T-1180.*gg+12.61*API)/(p*10**5)
 		
 if __name__ == "__main__":
 

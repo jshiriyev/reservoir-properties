@@ -37,7 +37,7 @@ class CrudeOilSystem:
 		return rhoo/rhow
 
 	@staticmethod
-	def API(spgr:float|np.ndarray):
+	def spgr2API(spgr:float|np.ndarray):
 		"""
 		Calculates API gravity from specific gravity:
 		
@@ -54,6 +54,22 @@ class CrudeOilSystem:
 
 		"""
 		return 141.5/spgr-131.5
+
+	@staticmethod
+	def API2spgr(API:float|np.ndarray):
+		"""
+		Calculates specific gravity from API gravity:
+		
+		Inputs:
+		------
+		API gravity of the oil
+
+		Returns:
+		-------
+		specific gravity of the oil
+
+		"""
+		return 141.5/(API+131.5)
 
 	@staticmethod
 	def spgr_solg(*separators,ST:tuple[float,float]):
@@ -91,37 +107,6 @@ class CrudeOilSystem:
 
 		return upper/lower
 
-	@staticmethod
-	def gas_correction(Tsep,psep,API,gg):
-		"""Method to calculate corrected gas gravity:
-
-		Realizing that the value of the specific gravity of the gas depends on
-		the conditions under which it is separated from the oil, Vasquez and
-		Beggs proposed that the value of the gas specific gravity as obtained
-		from a separator pressure of 100 psig be used in the above equation. This
-		reference pressure was chosen because it represents the average field
-		separator conditions.
-		
-		Inputs:
-		------
-		Tsep	: Actual separator temperature, °F
-		psep	: Actual separator pressure, psia
-		API	 	: API oil gravity
-		gg	  	: Gas gravity at the actual separator conditions of psep and Tsep
-
-		Returns:
-		-------
-		Gas gravity at the reference separator pressure
-
-		The gas gravity used to develop all the correlations reported by the
-		authors was that which would result from a two-stage separation. The
-		first-stage pressure was chosen as 100 psig and the second stage was the
-		stock tank. If the separator conditions are unknown, the unadjusted gas
-		gravity may be used.
-
-		"""
-		return gg*(1+5.912e-5*API*Tsep*np.log10(psep/(100+14.7)))
-
 if __name__ == "__main__":
 
 	sg = CrudeOilSystem.spgr(53)
@@ -131,9 +116,9 @@ if __name__ == "__main__":
 
 	print(CrudeOilSystem.spgr_solg((724,0.743),(202,0.956),ST=(58,1.296)))
 
-	print(CrudeOilSystem.gas_correction( 60,150+14.7,47.1,0.851))
-	print(CrudeOilSystem.gas_correction( 75,100+14.7,40.7,0.855))
-	print(CrudeOilSystem.gas_correction( 72,100+14.7,48.6,0.911))
-	print(CrudeOilSystem.gas_correction(120, 60+14.7,40.5,0.898))
-	print(CrudeOilSystem.gas_correction( 60,200+14.7,44.2,0.781))
-	print(CrudeOilSystem.gas_correction(173, 85+14.7,27.3,0.848))
+	print(CrudeOilSystem.gg_corr( 60,150+14.7,47.1,0.851))
+	print(CrudeOilSystem.gg_corr( 75,100+14.7,40.7,0.855))
+	print(CrudeOilSystem.gg_corr( 72,100+14.7,48.6,0.911))
+	print(CrudeOilSystem.gg_corr(120, 60+14.7,40.5,0.898))
+	print(CrudeOilSystem.gg_corr( 60,200+14.7,44.2,0.781))
+	print(CrudeOilSystem.gg_corr(173, 85+14.7,27.3,0.848))

@@ -1,6 +1,6 @@
 from respy.fluid._fluid import Fluid
 
-class Gas():
+class phaseg():
     """
     The hydrocarbon gases that are normally found in a natural gas are
     methanes, ethanes, propanes, butanes, pentanes, and small amounts of

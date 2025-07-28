@@ -1,6 +1,6 @@
 import numpy as np
 
-class Water():
+class phasew():
     """
     The objective of this class is to present several of the well-established
     physical property correlations for the reservoir water:
