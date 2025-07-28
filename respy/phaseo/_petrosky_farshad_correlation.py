@@ -1,25 +1,26 @@
-import numpu as np
+import numpy as np
 
 from ._crude_oil_system import CrudeOilSystem as cos
 
 class PetroskyFarshad:
 
 	@staticmethod
-	def gass(T,p,API,gg)
+	def gass(p:np.ndarray,sgsg:float,gAPI:float,temp:float)
 		"""
 		Petrosky and Farshad (1993) used a nonlinear multiple regression software
 		to develop a gas solubility correlation. The authors constructed a
 		PVT database from 81 laboratory analyses from the Gulf of Mexico crude
 		oil system. Petrosky and Farshad proposed the following expression
 		
-		T = temperature, °F
-		p = pressure, psia
+		p 	 = pressure, psia
+
+		temp = temperature, °F
 
 		"""
-		x = 7.916e-4*API**1.5410 - 4.561e-5*T**1.3911
+		x = 7.916e-4*gAPI**1.5410 - 4.561e-5*temp**1.3911
 		# print(f"\n{x=}")
 
-		return ((p/112.27+12.340)*gg**0.8439*10**x)**1.73184
+		return ((p/112.27+12.340)*sgsg**0.8439*10**x)**1.73184
 
 if __name__ == "__main__":
 

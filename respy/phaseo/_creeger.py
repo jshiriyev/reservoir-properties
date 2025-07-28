@@ -1,6 +1,6 @@
 class Creeger():
 
-	def Rst():
+	def gassb():
 		"""Calculates the stock-tank GOR. It should not be used
 		if the separator temperature is >140F."""
 

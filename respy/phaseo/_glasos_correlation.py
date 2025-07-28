@@ -4,7 +4,7 @@ from ._crude_oil_system import CrudeOilSystem as cos
 
 class Glaso:
 
-	def gass(T,p,api,gg):
+	def gass(p:np.ndarray,sgsg,gAPI,temp):
 		"""
 		Glaso (1980) proposed a correlation for estimating the gas solubility as
 		a function of the API gravity, pressure, temperature, and gas specific gravity.
@@ -12,10 +12,11 @@ class Glaso:
 		samples. Glaso reported an average error of 1.28% with a standard deviation
 		of 6.98%.
 
-		T = temperature, °F
 		p = system pressure, psia
 
-		gg = solution gas specific gravity
+		sgsg = solution gas specific gravity
+		gAPI = API gravity, dimensionless
+		temp = temperature, °F
 
 		"""
 		x = 2.8869 - (14.1811 - 3.3093*np.log10(p))**0.5
@@ -23,7 +24,7 @@ class Glaso:
 
 		pb_star = 10**x
 
-		return gg*(api**0.989/T**0.172*pb_star)**1.2255
+		return sgsg*(gAPI**0.989/temp**0.172*pb_star)**1.2255
 
 if __name__ == "__main__":
 

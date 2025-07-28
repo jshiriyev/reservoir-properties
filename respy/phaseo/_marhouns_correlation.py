@@ -5,17 +5,17 @@ from ._crude_oil_system import CrudeOilSystem as cos
 class Marhoun:
 
 	@staticmethod
-	def gass(T,p,api,gg):
+	def gass(p,sgsg,gAPI,temp):
 		"""
 		Marhoun (1988) developed an expression for estimating the saturation
 		pressure of the Middle Eastern crude oil systems. The correlation originates
 		from 160 experimental saturation pressure data.
 		
-		T = temperature, °F
-		p = system pressure, psia
-
-		go = stock-tank oil gravity
-		gg = gas specific gravity
+		p 	 = system pressure, psia
+		
+		sgsg = gas specific gravity
+		sgco = stock-tank oil gravity
+		temp = temperature, °F
 		
 		"""
 		a = 185.843208
@@ -24,9 +24,9 @@ class Marhoun:
 		d = -1.32657
 		e = 1.398441
 
-		go = 141.5/(api+131.5)
+		sgco = 141.5/(gAPI+131.5)
 
-		return (a*gg**b*go**c*(T+460)**d*p)**e
+		return (a*sgsg**b*sgco**c*(temp+460)**d*p)**e
 
 if __name__ == "__main__":
 

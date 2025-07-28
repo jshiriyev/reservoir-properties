@@ -36,7 +36,7 @@ class CrudeOilSystem:
 		return rhoo/rhow
 
 	@staticmethod
-	def sgco_to_API(sgco:float|np.ndarray):
+	def sgco_to_gAPI(sgco:float|np.ndarray):
 		"""
 		Calculates API gravity from specific gravity:
 		
@@ -46,7 +46,7 @@ class CrudeOilSystem:
 
 		Returns:
 		-------
-		API gravity of the oil
+		gAPI 	: API gravity of the oil
 
 		The API gravities of crude oils usually range from 47° API for the
 		lighter crude oils to 10° API for the heavier asphaltic crude oils.
@@ -55,20 +55,20 @@ class CrudeOilSystem:
 		return 141.5/sgco-131.5
 
 	@staticmethod
-	def API_to_sgco(API:float|np.ndarray):
+	def gAPI_to_sgco(gAPI:float|np.ndarray):
 		"""
 		Calculates specific gravity from API gravity:
 		
 		Inputs:
 		------
-		API gravity of the oil
+		gAPI 	: API gravity of the oil
 
 		Returns:
 		-------
-		specific gravity of the oil
+		sgco 	: specific gravity of the oil
 
 		"""
-		return 141.5/(API+131.5)
+		return 141.5/(gAPI+131.5)
 
 	@staticmethod
 	def get_sgsg(*separators,ST:tuple[float,float]):
@@ -108,9 +108,9 @@ class CrudeOilSystem:
 
 if __name__ == "__main__":
 
-	sgco = CrudeOilSystem.sgco(53)
+	sgco = CrudeOilSystem.get_sgco(53)
 	print(sgco)
 
-	print(CrudeOilSystem.sgco2API(sgco))
+	print(CrudeOilSystem.sgco_to_gAPI(sgco))
 
-	print(CrudeOilSystem.sgsg((724,0.743),(202,0.956),ST=(58,1.296)))
+	print(CrudeOilSystem.get_sgsg((724,0.743),(202,0.956),ST=(58,1.296)))

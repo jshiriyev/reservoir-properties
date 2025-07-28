@@ -5,7 +5,7 @@ from ._crude_oil_system import CrudeOilSystem as cos
 class MaterialBalance:
 
 	@staticmethod
-	def gass(rho,fvf,api,gg):
+	def gass(rho,fvf,sgsg,gAPI):
 		"""
 		The gas solubility can also be calculated rigorously from the experimental
 		measured PVT data at the specified pressure and temperature.
@@ -16,18 +16,18 @@ class MaterialBalance:
 		rho = oil density, lb/ft3
 		fvf = oil formation volume factor, bbl/STB
 
-		go = specific gravity of the stock-tank oil
-		gg = specific gravity of the solution gas
+		sgsg = specific gravity of the solution gas
+		sgco = specific gravity of the stock-tank oil
 
 		McCain (1991) pointed out that the weight average of separator and
-		stock-tank gas specific gravities should be used for gg. The error in calculating
+		stock-tank gas specific gravities should be used for sgsg. The error in calculating
 		Rs by using the above equation will depend only on the accuracy
 		of the available PVT data.
 
 		"""
-		go = 141.5/(api+131.5)
+		sgco = 141.5/(gAPI+131.5)
 
-		return (fvf*rho-62.4*go)/(0.0136*gg)
+		return (fvf*rho-62.4*sgco)/(0.0136*sgsg)
 
 if __name__ == "__main__":
 

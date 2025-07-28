@@ -5,29 +5,30 @@ from ._crude_oil_system import CrudeOilSystem as cos
 class Standing:
 
 	@staticmethod
-	def bpp(T:float,API:float,sgsg:float,Rsb:float):
+	def bpp(Rsb:float,sgsg:float,gAPI:float,temp:float):
 		"""
 		Calculates the bubblepoint pressure of the oil at reservoir conditions
 		
 		Inputs:
 		------
-		T 	 : System temperature, °F
-		API  : API gravity of oil, dimensionless
-		sgsg : Specific gravity of the separator gas
 		Rsb	 : Gas solubility at the bubble-point pressure, scf/STB
+		
+		sgsg : Specific gravity of the separator gas
+		gAPI : API gravity of oil, dimensionless
+		temp : System temperature, °F
 
 		The equations are valid to 325F. The correlation should be used with caution
 		if nonhydrocarbon components are known to be present in the system.
 
 		"""
-		x = 0.00091*T-0.0125*API
+		x = 0.00091*temp-0.0125*gAPI
 
 		Cpb = (Rsb/sgsg)**0.83*10**x
 
 		return 18.2*(Cpb-1.4)
 
 	@staticmethod
-	def gass(T:float,p:np.ndarray,API:float,sgsg:float):
+	def gass(p:np.ndarray,sgsg:float,gAPI:float,temp:float):
 		"""
 		Standing (1947) proposed a graphical correlation for determining the
 		gas solubility as a function of pressure, gas specific gravity, API gravity,
@@ -42,25 +43,24 @@ class Standing:
 		
 		Inputs:
 		------
-		T 	 : System temperature, °F
 		p 	 : System pressure, psia
-		API  : API gravity of oil, dimensionless
+		
 		sgsg : Solution gas specific gravity
+		gAPI : API gravity of oil, dimensionless
+		temp : System temperature, °F
 
 		It should be noted that Standing’s equation is valid for applications at
 		and below the bubble-point pressure of the crude oil.
 
 		"""
-		x = 0.0125*API-0.00091*T
+		x = 0.0125*gAPI-0.00091*temp
 
 		Cpb = p/18.2+1.4
 
-		Rs = sgsg*(Cpb*10**x)**1.20482
-
-		return Rs
+		return sgsg*(Cpb*10**x)**1.20482
 
 	@staticmethod
-	def fvf(T:float,API:float,sgsg:float,Rs:np.ndarray):
+	def fvf(gass:np.ndarray,sgsg:float,gAPI:float,temp:float):
 		"""
 		Standing (1947) presented a graphical correlation for estimating the oil
 		formation volume factor with the gas solubility, gas gravity, oil gravity,
@@ -75,15 +75,16 @@ class Standing:
 
 		Inputs:
 		------
-		T 	 : Temperature, °T
-		API  : API gravity of oil, dimensionless
+		gass : Solution GOR, scf/STB
+		
 		sgsg : Specific gravity of the solution gas
-		Rs 	 : Solution GOR, scf/STB
+		gAPI : API gravity of oil, dimensionless
+		temp : Temperature, °T
 
 		"""
-		go = cos.API2spgr(API)
+		sgco = cos.gAPI_to_sgco(gAPI)
 
-		CBob = Rs*(sgsg/go)**0.5+1.25*T
+		CBob = gass*(sgsg/sgco)**0.5+1.25*temp
 
 		# oil formation volume factor at the bubble-point pressure, bbl/STB
 		Bob = 0.9759+0.00012*CBob**1.2
@@ -91,26 +92,27 @@ class Standing:
         return Bob # Bob*np.exp(-co*(p-bpp))
 
 	@staticmethod
-	def comp(T:float,p:np.ndarray,API:float,sgsg:float,Rs:np.ndarray,fvfo:np.ndarray,fvfg:np.ndarray):
+	def comp(p:np.ndarray,gass:np.ndarray,fvfg:np.ndarray,fvfo:np.ndarray,sgsg:float,gAPI:float,temp:float):
 		"""
 		It calculates compressibility based on the analytical derivation.
 
 		Inputs:
 		------
-		T 	 : Temperature, °F
 		p 	 : Pressure, psia
-		API	 : API gravity of oil, dimensionless
-		sgsg : Specific gravity of the solution gas
-		Rs 	 : Gas solubility at pressure p, scf/STB
 
-		fvfo : Oil formation volume factor at p, bbl/STB
+		gass : Gas solubility at pressure p, scf/STB
 		fvfg : Gas formation volume factor at pressure p, bbl/scf
+		fvfo : Oil formation volume factor at p, bbl/STB
+
+		sgsg : Specific gravity of the solution gas
+		gAPI : API gravity of oil, dimensionless
+		temp : Temperature, °F
 
 		"""
-		go = cos.API2spgr(API)
+		sgco = cos.gAPI_to_sgco(gAPI)
 
-		pRs = Rs/(0.83*p+21.75)
-		pBo = 0.000144*pRs*np.sqrt(sgsg/go)*(Rs*np.sqrt(sgsg/go)+1.25*T)**0.12
+		pRs = gass/(0.83*p+21.75)
+		pBo = 0.000144*pRs*np.sqrt(sgsg/sgco)*(gass*np.sqrt(sgsg/sgco)+1.25*temp)**0.12
 
 		return (fvfg*pRs-pBo)/fvfo
 

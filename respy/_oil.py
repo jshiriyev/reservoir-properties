@@ -6,32 +6,27 @@ from .phaseo._crude_oil_system import CrudeOilSystem
 
 class phaseo(CrudeOilSystem):
 
-    def __init__(self,T,API,sgsg):
+    def __init__(self,sgsg:float,gAPI:float,temp:float):
 
-        self._T     = T
-        self._API   = API
         self._sgsg  = sgsg
+        self._gAPI  = gAPI
+        self._temp  = temp
 
-    @property
-    def T(self):
-        return self._T
-
-    @property
-    def API(self):
-        return self._API
-    
     @property
     def sgsg(self):
         return self._sgsg
 
     @property
-    def gassb(self):
-        return self._gassb
+    def gAPI(self):
+        return self._gAPI
 
-    @gassb.setter
-    def gassb(self,value):
-        self._gassb = gassb
-        self._bbp = bbp
+    @property
+    def temp(self):
+        return self._temp
+
+    def __call__(self,gassb,):
+
+        _gassb,_bbp = None,None        
     
     def gass(self,p:np.ndarray,method="",**kwargs):
         """
@@ -64,7 +59,7 @@ class phaseo(CrudeOilSystem):
         given below:
 
         • Standing’s correlation
-        • The Vasquez-Beggs correlation
+        • The Vasquez-Begs correlation
         • Glaso’s correlation
         • Marhoun’s correlation
         • The Petrosky-Farshad correlation
@@ -92,36 +87,38 @@ class phaseo(CrudeOilSystem):
 
         pass
 
-    def rho(T,p,Bo,Rs,API,gg,Tsep,psep):
+    def rho(T,p,Bo,Rs,gAPI,sgsg,Tsep,psep):
         """
         The crude oil density is defined as the mass of a unit volume of the
         crude at a specified pressure and temperature. It is usually expressed in
         pounds per cubic foot.
 
-        Function to Calculate Oil Density in lb/ft
-        #'T          temperature, °F
-        #'P          pressure, psia
-        #'Tsep       separator temperature, °F
-        #'Psep       separator pressure, psia
-        #'Pb         bubble point pressure, psia
-        #'Bo         oil formation volume factor, bbl/stb
-        #'Rs         solution gas-oil ratio, scf/stb
-        #'gg   gas specific gravity
-        #'API   API oil gravity
+        Function to Calculate Oil Density in lb/ft3
+
+        T     : temperature, °F
+        P     : pressure, psia
+        sgsg  : gas specific gravity
+        gAPI  : API oil gravity
+
+        Tsep  : separator temperature, °F
+        psep  : separator pressure, psia
+        Pb    : bubble point pressure, psia
+        Bo    : oil formation volume factor, bbl/stb
+        Rs    : solution gas-oil ratio, scf/stb
 
         """
         # rhor = (rhoSTO+0.01357*Rs*gamma_gas)/fvf
         # return rhob*numpy.exp(comp*(pres-pbubble))
         #print(rho(150,2500,65,90,2500,1.23,300,.65,35))
 
-        API_sp = 141.5 / (API + 131.5)
+        API_sp = 141.5 / (gAPI + 131.5)
 
         if (P <= Pb):
-            rho_o = (350 * API_sp + 0.0764 * gg * Rs) / (5.615 * Bo)
+            rho_o = (350 * API_sp + 0.0764 * sgsg * Rs) / (5.615 * Bo)
         else:
-            co = oil_comp(T, P, Tsep, Psep, Rs, gg, API)
+            co = oil_comp(T, P, Tsep, psep, Rs, sgsg, gAPI)
             Bob = Bo / (math.exp(co * (P - Pb)))
-            rho_ob = (350 * API_sp + 0.0764 * gg * Rs) / (5.615 * Bob)
+            rho_ob = (350 * API_sp + 0.0764 * sgsg * Rs) / (5.615 * Bob)
             rho_o = rho_ob * Bo / Bob
         
         return rho_o
