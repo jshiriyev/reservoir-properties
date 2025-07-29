@@ -4,6 +4,7 @@ class Layer():
 	"""
 	Base class that defines constant reservoir rock properties
 	at the given pressure and temperature.
+	
 	"""
 
 	def __init__(self,*args,poro=None,comp=None,press=None,**kwargs):
