@@ -1,34 +1,43 @@
-import os,sys
+import os
+import sys
 
 import numpy as np
 
 from .phaseo._crude_oil_system import CrudeOilSystem
 
-class phaseo(CrudeOilSystem):
+class OilPhase(CrudeOilSystem):
 
     def __init__(self,sgsg:float,gAPI:float,temp:float):
+        """
+        Initialize a phaseo instance.
 
+        Args:
+        ----
+        sgsg (float): Specific gravity of solution gas.
+        gAPI (float): API gravity of oil.
+        temp (float): Temperature in Fahrenheit.
+
+        """
         self._sgsg  = sgsg
         self._gAPI  = gAPI
         self._temp  = temp
 
     @property
     def sgsg(self):
+        """Get the specific gravity of the solution gas."""
         return self._sgsg
 
     @property
     def gAPI(self):
+        """Get the API gravity of the oil."""
         return self._gAPI
 
     @property
     def temp(self):
-        return self._temp
-
-    def __call__(self,gassb,):
-
-        _gassb,_bbp = None,None        
+        """Get the temperature of the reservoir."""
+        return self._temp       
     
-    def gass(self,p:np.ndarray,method="",**kwargs):
+    def gass(self,p:np.ndarray,method="standing",**kwargs):
         """
         The gas solubility Rs is defined as the number of standard cubic feet of
         gas which will dissolve in one stock-tank barrel of crude oil at certain
@@ -58,11 +67,11 @@ class phaseo(CrudeOilSystem):
         The following five empirical correlations for estimating the gas solubility are
         given below:
 
-        • Standing’s correlation
-        • The Vasquez-Begs correlation
-        • Glaso’s correlation
-        • Marhoun’s correlation
-        • The Petrosky-Farshad correlation
+        • Standing’s correlation (standing)
+        • The Vasquez-Beggs correlation (vasquez_beggs)
+        • Glaso’s correlation (glaso)
+        • Marhoun’s correlation (marhoun)
+        • The Petrosky-Farshad correlation (petrosky_farshad)
 
         """
         sys.path.append(os.path.dirname(__file__))
