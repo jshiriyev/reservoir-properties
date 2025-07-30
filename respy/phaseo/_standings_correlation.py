@@ -5,7 +5,7 @@ from ._crude_oil_system import CrudeOilSystem as cos
 class StandingsCorrelation:
 
 	@staticmethod
-	def bpp(Rsb:float,sgsg:float,gAPI:float,temp:float):
+	def gassb_to_bpp(Rsb:float,sgsg:float,gAPI:float,temp:float):
 		"""
 		Calculates the bubblepoint pressure of the oil at reservoir conditions
 		

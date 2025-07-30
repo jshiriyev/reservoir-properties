@@ -5,7 +5,41 @@ from ._crude_oil_system import CrudeOilSystem as cos
 class VasquezBeggsCorrelation:
 
 	@staticmethod
-	def bpp(Rsb:float,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
+	def sgsg_corr(sgsg:float,gAPI:float,psep:float=None,Tsep:float=None):
+		"""Method to calculate corrected specific gravity for the solution gas:
+
+		Realizing that the value of the specific gravity of the gas depends on
+		the conditions under which it is separated from the oil, Vasquez and
+		Beggs proposed that the value of the gas specific gravity as obtained
+		from a separator pressure of 100 psig be used in the above equation. This
+		reference pressure was chosen because it represents the average field
+		separator conditions.
+		
+		Inputs:
+		------
+		sgsg  	: Gas gravity at the actual separator conditions of psep and Tsep
+		gAPI	: API oil gravity
+		psep	: Actual separator pressure, psia
+		Tsep	: Actual separator temperature, °F
+
+		Returns:
+		-------
+		Gas gravity at the reference separator pressure
+
+		The gas gravity used to develop all the correlations reported by the
+		authors was that which would result from a two-stage separation. The
+		first-stage pressure was chosen as 100 psig and the second stage was the
+		stock tank. If the separator conditions are unknown, the unadjusted gas
+		gravity may be used.
+
+		"""
+		if psep and Tsep:
+			return sgsg*(1+5.912e-5*gAPI*Tsep*np.log10(psep/(100+14.7)))
+
+		return sgsg
+
+	@staticmethod
+	def gassb_to_bpp(Rsb:float,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
 		"""
 		Vasquez and Beggs’ gas solubility correlation can be solved for the
 		bubble-point pressure that will require the following inputs:
@@ -31,7 +65,7 @@ class VasquezBeggsCorrelation:
 			C2 = 0.84246
 			C3 = 10.393
 
-		sgsg = VasquezBeggsCorrelation.sgsgcorr(sgsg,gAPI,psep,Tsep)
+		sgsg = VasquezBeggsCorrelation.sgsg_corr(sgsg,gAPI,psep,Tsep)
 		
 		a = -C3*gAPI/temp
 
@@ -39,7 +73,7 @@ class VasquezBeggsCorrelation:
 		return (C1*Rsb/sgsg*10**a)**C2
 
 	@staticmethod
-	def gass(p:np.ndarray,bpp:float,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
+	def gass_sat(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
 		"""
 		Vasquez and Beggs (1980) presented an improved empirical correlation
 		for estimating Rs. The correlation was obtained by regression analysis
@@ -75,19 +109,17 @@ class VasquezBeggsCorrelation:
 			C2 = 1.1870
 			C3 = 23.931
 
-		sgsg = VasquezBeggsCorrelation.sgsgcorr(sgsg,gAPI,psep,Tsep)
+		sgsg = VasquezBeggsCorrelation.sgsg_corr(sgsg,gAPI,psep,Tsep)
 
-		p = np.atleast_1d(p)
-
-		Rsb = C1*sgsg*bpp**C2*np.exp(C3*gAPI/(temp+460))
-
-		_Rs = np.full_like(p,Rsb)
-		_Rs[p<bpp] = C1*sgsg*p[p<bpp]**C2*np.exp(C3*gAPI/(temp+460))
-
-		return _Rs
+		return C1*sgsg*p**C2*np.exp(C3*gAPI/(temp+460))
 
 	@staticmethod
-	def fvf(p:np.ndarray,bpp:float,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
+	def gass_sat_prime(p:float|np.ndarray):
+
+		pass
+
+	@staticmethod
+	def fvf_sat(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
 		"""Calculates Oil Formation Volume Factor in bbl/stb
 
 		Vasquez and Beggs (1980) developed a relationship for determining
@@ -99,8 +131,6 @@ class VasquezBeggsCorrelation:
 		Inputs:
 		------
 		p	 : System pressure, psia
-
-		bpp	 : Bubble point pressure, psia
 		
 		sgsg : gas specific gravity
 		gAPI : API oil gravity
@@ -122,25 +152,48 @@ class VasquezBeggsCorrelation:
 			C2 = 1.100E-05
 			C3 = 1.337E-09
 
-		sgsg = VasquezBeggsCorrelation.sgsgcorr(sgsg,gAPI,psep,Tsep)
+		sgsg = VasquezBeggsCorrelation.sgsg_corr(sgsg,gAPI,psep,Tsep)
 
-		p = np.atleast_1d(p)
+		Rs = VasquezBeggsCorrelation.gass_sat(p,sgsg,gAPI,temp)
+		
+		return 1.+C1*Rs+(temp-60)*(gAPI/sgsg)*(C2+C3*Rs)
 
-		Rsb = VasquezBeggsCorrelation.gass(bpp,bpp,sgsg,gAPI,temp)
+	@staticmethod
+	def fvf_sat_prime(p:float|np.ndarray):
+
+		pass
+
+	@staticmethod
+	def fvf_nonsat(p:float|np.ndarray,bpp:float,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
+		"""
+		bpp	 : Bubble point pressure, psia
+
+		"""
+		if gAPI<=30.:
+			C1 = 4.677E-04
+			C2 = 1.751E-05
+			C3 = -1.811E-08
+		else:
+			C1 = 4.670E-4
+			C2 = 1.100E-05
+			C3 = 1.337E-09
+
+		Rsb = VasquezBeggsCorrelation.gass_sat(bpp,sgsg,gAPI,temp)
 		Bob = 1.+C1*Rsb+(temp-60)*(gAPI/sgsg)*(C2+C3*Rsb)
-
-		Rs = VasquezBeggsCorrelation.gass(p,bpp,sgsg,gAPI,temp)
-		Bo = 1.+C1*Rs+(temp-60)*(gAPI/sgsg)*(C2+C3*Rs)
 
 		A = (-1433.+5.*Rsb+17.2*temp-1180.*sgsg+12.61*gAPI)/(10**5)
 
-		Bo[p>bpp] = Bob*np.exp(-A*np.log(p[p>bpp]/bpp))
-		
-		return Bo
+		return Bob*np.exp(-A*np.log(p/bpp))
 	
 	@staticmethod
-	def comp(p:np.ndarray,bpp:float,fvfg:np.ndarray,fvfo:np.ndarray,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
-		"""Calculates oil isothermal compressibility in 1/psi
+	def comp_sat(p:float|np.ndarray):
+
+		pass
+
+	@staticmethod
+	def comp_nonsat(p:float|np.ndarray,bpp:float,fvfg:np.ndarray,fvfo:np.ndarray,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
+		"""Calculates oil isothermal compressibility in 1/psi for pressures above
+		buble point.
 
 		From a total of 4,036 experimental data points used in a linear regression
 		model, Vasquez and Beggs (1980) correlated the isothermal oil compressibility
@@ -160,49 +213,12 @@ class VasquezBeggsCorrelation:
 		psep : separator pressure, psia
 		Tsep : separator temperature, °F
 
-		"""
-
-		# IT IS ONLY VALID FOR PRESSURES ABOVE BPP
-		
-		sgsg = VasquezBeggsCorrelation.sgsgcorr(sgsg,gAPI,psep,Tsep)
+		"""		
+		sgsg = VasquezBeggsCorrelation.sgsg_corr(sgsg,gAPI,psep,Tsep)
 
 		Rsb = VasquezBeggsCorrelation.gass(bpp,bpp,sgsg,gAPI,temp)
 
 		return (-1433.+5.*Rsb+17.2*temp-1180.*sgsg+12.61*gAPI)/(p*10**5)
-
-	@staticmethod
-	def sgsgcorr(sgsg:float,gAPI:float,psep:float=None,Tsep:float=None):
-		"""Method to calculate corrected specific gravity for the solution gas:
-
-		Realizing that the value of the specific gravity of the gas depends on
-		the conditions under which it is separated from the oil, Vasquez and
-		Beggs proposed that the value of the gas specific gravity as obtained
-		from a separator pressure of 100 psig be used in the above equation. This
-		reference pressure was chosen because it represents the average field
-		separator conditions.
-		
-		Inputs:
-		------
-		sgsg  	: Gas gravity at the actual separator conditions of psep and Tsep
-		gAPI	: API oil gravity
-		psep	: Actual separator pressure, psia
-		Tsep	: Actual separator temperature, °F
-
-		Returns:
-		-------
-		Gas gravity at the reference separator pressure
-
-		The gas gravity used to develop all the correlations reported by the
-		authors was that which would result from a two-stage separation. The
-		first-stage pressure was chosen as 100 psig and the second stage was the
-		stock tank. If the separator conditions are unknown, the unadjusted gas
-		gravity may be used.
-
-		"""
-		if psep and Tsep:
-			return sgsg*(1+5.912e-5*gAPI*Tsep*np.log10(psep/(100+14.7)))
-
-		return sgsg
 		
 if __name__ == "__main__":
 
@@ -213,9 +229,9 @@ if __name__ == "__main__":
 	print(VasquezBeggsCorrelation.gass(218,3045,44.2,0.781, 60,200+14.7))
 	print(VasquezBeggsCorrelation.gass(180,4239,27.3,0.848,173, 85+14.7))
 
-	print(VasquezBeggsCorrelation.sgsgcorr( 60,150+14.7,47.1,0.851))
-	print(VasquezBeggsCorrelation.sgsgcorr( 75,100+14.7,40.7,0.855))
-	print(VasquezBeggsCorrelation.sgsgcorr( 72,100+14.7,48.6,0.911))
-	print(VasquezBeggsCorrelation.sgsgcorr(120, 60+14.7,40.5,0.898))
-	print(VasquezBeggsCorrelation.sgsgcorr( 60,200+14.7,44.2,0.781))
-	print(VasquezBeggsCorrelation.sgsgcorr(173, 85+14.7,27.3,0.848))
+	print(VasquezBeggsCorrelation.sgsg_corr( 60,150+14.7,47.1,0.851))
+	print(VasquezBeggsCorrelation.sgsg_corr( 75,100+14.7,40.7,0.855))
+	print(VasquezBeggsCorrelation.sgsg_corr( 72,100+14.7,48.6,0.911))
+	print(VasquezBeggsCorrelation.sgsg_corr(120, 60+14.7,40.5,0.898))
+	print(VasquezBeggsCorrelation.sgsg_corr( 60,200+14.7,44.2,0.781))
+	print(VasquezBeggsCorrelation.sgsg_corr(173, 85+14.7,27.3,0.848))
