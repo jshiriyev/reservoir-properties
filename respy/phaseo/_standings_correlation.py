@@ -55,12 +55,12 @@ class StandingsCorrelation:
 		and below the bubble-point pressure of the crude oil.
 
 		"""
-		p = np.atleast_1d(p)
-
 		Rsb = StandingsCorrelation.gass_sat(bpp,sgsg,gAPI,temp)
 
-		Rs = np.full_like(p,Rsb)
-		Rs[p<bpp] = StandingsCorrelation.gass_sat(p[p<bpp],sgsg,gAPI,temp)
+		_p = np.atleast_1d(p)
+		Rs = np.full_like(_p,Rsb)
+
+		Rs[_p<bpp] = StandingsCorrelation.gass_sat(_p[_p<bpp],sgsg,gAPI,temp)
 
 		return Rs
 
@@ -128,7 +128,6 @@ class StandingsCorrelation:
 		------
 		p 	 : Pressure, psia
 
-		gass : Gas solubility at pressure p, scf/STB
 		fvfg : Gas formation volume factor at pressure p, bbl/scf
 		fvfo : Oil formation volume factor at p, bbl/STB
 
