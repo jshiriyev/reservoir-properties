@@ -28,7 +28,7 @@ class StandingsCorrelation:
 		return 18.2*(Cpb-1.4)
 
 	@staticmethod
-	def gass(p:np.ndarray,bpp:float,sgsg:float,gAPI:float,temp:float):
+	def gass_sat(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float):
 		"""
 		Standing (1947) proposed a graphical correlation for determining the
 		gas solubility as a function of pressure, gas specific gravity, API gravity,
@@ -55,18 +55,6 @@ class StandingsCorrelation:
 		and below the bubble-point pressure of the crude oil.
 
 		"""
-		Rsb = StandingsCorrelation.gass_sat(bpp,sgsg,gAPI,temp)
-
-		_p = np.atleast_1d(p)
-		Rs = np.full_like(_p,Rsb)
-
-		Rs[_p<bpp] = StandingsCorrelation.gass_sat(_p[_p<bpp],sgsg,gAPI,temp)
-
-		return Rs
-
-	@staticmethod
-	def gass_sat(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float):
-
 		x = 0.0125*gAPI-0.00091*temp
 
 		return sgsg*((p/18.2+1.4)*10**x)**(1./0.83)

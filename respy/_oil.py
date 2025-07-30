@@ -103,7 +103,14 @@ class OilPhase(CrudeOilSystem):
         • The Petrosky-Farshad correlation (petrosky_farshad)
 
         """
-        return self.__corr.gass(p,self.bpp,self.sgsg,self.gAPI,self.temp,**kwargs)
+        Rsb = self.__corr.gass_sat(self.bpp,sgsg,gAPI,temp,**kwargs)
+
+        _p = np.atleast_1d(p)
+        Rs = np.full_like(_p,Rsb)
+
+        Rs[_p<self.bpp] = self.__corr.gass_sat(_p[_p<self.bpp],self.sgsg,self.gAPI,self.temp,**kwargs)
+
+        return Rs
 
     def fvf(self,p:np.ndarray,**kwargs):
         """
