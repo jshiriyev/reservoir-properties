@@ -55,18 +55,33 @@ class StandingsCorrelation:
 		and below the bubble-point pressure of the crude oil.
 
 		"""
-		x = 0.0125*gAPI-0.00091*temp
 		p = np.atleast_1d(p)
 
-		Rsb = sgsg*((bpp/18.2+1.4)*10**x)**(1/0.83)
+		Rsb = StandingsCorrelation.gass_sat(bpp,sgsg,gAPI,temp)
 
-		_Rs = np.full_like(p,Rsb)
-		_Rs[p<bpp] = sgsg*((p[p<bpp]/18.2+1.4)*10**x)**1.20482
+		Rs = np.full_like(p,Rsb)
+		Rs[p<bpp] = StandingsCorrelation.gass_sat(p[p<bpp],sgsg,gAPI,temp)
 
-		return _Rs
+		return Rs
 
 	@staticmethod
-	def fvf(p:np.ndarray,bpp:float,sgsg:float,gAPI:float,temp:float):
+	def gass_sat(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float):
+
+		x = 0.0125*gAPI-0.00091*temp
+
+		return sgsg*((p/18.2+1.4)*10**x)**(1./0.83)
+
+	@staticmethod
+	def gass_sat_prime(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float):
+
+		sgco = cos.gAPI_to_sgco(gAPI)
+
+		gass = StandingsCorrelation.gass_sat(p,sgsg,gAPI,temp)
+
+		return gass/(0.83*p+21.75)
+
+	@staticmethod
+	def fvf_sat(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float):
 		"""
 		Standing (1947) presented a graphical correlation for estimating the oil
 		formation volume factor with the gas solubility, gas gravity, oil gravity,
@@ -90,17 +105,22 @@ class StandingsCorrelation:
 		"""
 		sgco = cos.gAPI_to_sgco(gAPI)
 
-		gass = StandingsCorrelation.gass(p,bpp,sgsg,gAPI,temp)
+		gass = StandingsCorrelation.gass_sat(p,sgsg,gAPI,temp)
 
 		CBob = gass*(sgsg/sgco)**0.5+1.25*temp
 
-		# oil formation volume factor at the bubble-point pressure, bbl/STB
-		Bob = 0.9759+0.00012*CBob**1.2
-
-		return Bob # Bob*np.exp(-co*(p-bpp))
+		return 0.9759+0.00012*CBob**1.2
 
 	@staticmethod
-	def comp(p:np.ndarray,bpp:float,fvfg:np.ndarray,fvfo:np.ndarray,sgsg:float,gAPI:float,temp:float):
+	def fvf_sat_prime(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float):
+
+		sgco = cos.gAPI_to_sgco(gAPI)
+		gass = StandingsCorrelation.gass_sat(p,sgsg,gAPI,temp)
+
+		return 0.000144*(gass/(0.83*p+21.75))*np.sqrt(sgsg/sgco)*(gass*np.sqrt(sgsg/sgco)+1.25*temp)**0.12
+
+	@staticmethod
+	def comp_sat(p:float|np.ndarray,fvfg:float|np.ndarray,fvfo:float|np.ndarray,sgsg:float,gAPI:float,temp:float):
 		"""
 		It calculates compressibility based on the analytical derivation.
 
@@ -117,9 +137,6 @@ class StandingsCorrelation:
 		temp : Temperature, °F
 
 		"""
-
-		# IT IS ONLY VALID FOR PRESSURES BELOW BPP
-
 		sgco = cos.gAPI_to_sgco(gAPI)
 
 		gass = StandingsCorrelation.gass(p,bpp,sgsg,gAPI,temp)
