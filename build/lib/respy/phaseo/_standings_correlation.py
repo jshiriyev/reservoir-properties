@@ -90,6 +90,8 @@ class StandingsCorrelation:
 		"""
 		sgco = cos.gAPI_to_sgco(gAPI)
 
+		gass = StandingsCorrelation.gass(p,bpp,sgsg,gAPI,temp)
+
 		CBob = gass*(sgsg/sgco)**0.5+1.25*temp
 
 		# oil formation volume factor at the bubble-point pressure, bbl/STB
@@ -98,7 +100,7 @@ class StandingsCorrelation:
 		return Bob # Bob*np.exp(-co*(p-bpp))
 
 	@staticmethod
-	def comp(p:np.ndarray,bpp:float,sgsg:float,gAPI:float,temp:float):
+	def comp(p:np.ndarray,bpp:float,fvfg:np.ndarray,fvfo:np.ndarray,sgsg:float,gAPI:float,temp:float):
 		"""
 		It calculates compressibility based on the analytical derivation.
 

@@ -1,6 +1,6 @@
 import numpy as np
 
-from ._crude_oil_system import VasquezBeggs as cos
+from ._crude_oil_system import CrudeOilSystem as cos
 
 class VasquezBeggsCorrelation:
 
@@ -31,7 +31,7 @@ class VasquezBeggsCorrelation:
 			C2 = 0.84246
 			C3 = 10.393
 
-		sgsg = VasquezBeggs.sgsgcorr(sgsg,gAPI,psep,Tsep)
+		sgsg = VasquezBeggsCorrelation.sgsgcorr(sgsg,gAPI,psep,Tsep)
 		
 		a = -C3*gAPI/temp
 
@@ -75,7 +75,7 @@ class VasquezBeggsCorrelation:
 			C2 = 1.1870
 			C3 = 23.931
 
-		sgsg = VasquezBeggs.sgsgcorr(sgsg,gAPI,psep,Tsep)
+		sgsg = VasquezBeggsCorrelation.sgsgcorr(sgsg,gAPI,psep,Tsep)
 
 		p = np.atleast_1d(p)
 
@@ -86,6 +86,7 @@ class VasquezBeggsCorrelation:
 
 		return _Rs
 
+	@staticmethod
 	def fvf(p:np.ndarray,bpp:float,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
 		"""Calculates Oil Formation Volume Factor in bbl/stb
 
@@ -97,7 +98,9 @@ class VasquezBeggsCorrelation:
 		
 		Inputs:
 		------
-		Rs	 : solution gas-oil ratio, scf/stb
+		p	 : System pressure, psia
+
+		bpp	 : Bubble point pressure, psia
 		
 		sgsg : gas specific gravity
 		gAPI : API oil gravity
@@ -119,11 +122,24 @@ class VasquezBeggsCorrelation:
 			C2 = 1.100E-05
 			C3 = 1.337E-09
 
-		sgsg = VasquezBeggs.sgsgcorr(sgsg,gAPI,psep,Tsep)
+		sgsg = VasquezBeggsCorrelation.sgsgcorr(sgsg,gAPI,psep,Tsep)
+
+		p = np.atleast_1d(p)
+
+		Rsb = VasquezBeggsCorrelation.gass(bpp,bpp,sgsg,gAPI,temp)
+		Bob = 1.+C1*Rsb+(temp-60)*(gAPI/sgsg)*(C2+C3*Rsb)
+
+		Rs = VasquezBeggsCorrelation.gass(p,bpp,sgsg,gAPI,temp)
+		Bo = 1.+C1*Rs+(temp-60)*(gAPI/sgsg)*(C2+C3*Rs)
+
+		A = (-1433.+5.*Rsb+17.2*temp-1180.*sgsg+12.61*gAPI)/(10**5)
+
+		Bo[p>bpp] = Bob*np.exp(-A*np.log(p[p>bpp]/bpp))
 		
-		return 1.+C1*Rs+(temp-60)*(gAPI/sgsg)*(C2+C3*Rs)
-		
-	def comp(p:np.ndarray,bpp:float,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
+		return Bo
+	
+	@staticmethod
+	def comp(p:np.ndarray,bpp:float,fvfg:np.ndarray,fvfo:np.ndarray,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
 		"""Calculates oil isothermal compressibility in 1/psi
 
 		From a total of 4,036 experimental data points used in a linear regression
@@ -145,7 +161,9 @@ class VasquezBeggsCorrelation:
 		Tsep : separator temperature, °F
 
 		"""
-		sgsg = VasquezBeggs.sgsgcorr(sgsg,gAPI,psep,Tsep)
+		sgsg = VasquezBeggsCorrelation.sgsgcorr(sgsg,gAPI,psep,Tsep)
+
+		Rsb = VasquezBeggsCorrelation.gass(bpp,bpp,sgsg,gAPI,temp)
 
 		return (-1433.+5.*Rsb+17.2*temp-1180.*sgsg+12.61*gAPI)/(p*10**5)
 
@@ -185,16 +203,16 @@ class VasquezBeggsCorrelation:
 		
 if __name__ == "__main__":
 
-	print(VasquezBeggs.gass(250,2377,47.1,0.851, 60,150+14.7))
-	print(VasquezBeggs.gass(220,2620,40.7,0.855, 75,100+14.7))
-	print(VasquezBeggs.gass(260,2051,48.6,0.911, 72,100+14.7))
-	print(VasquezBeggs.gass(237,2884,40.5,0.898,120, 60+14.7))
-	print(VasquezBeggs.gass(218,3045,44.2,0.781, 60,200+14.7))
-	print(VasquezBeggs.gass(180,4239,27.3,0.848,173, 85+14.7))
+	print(VasquezBeggsCorrelation.gass(250,2377,47.1,0.851, 60,150+14.7))
+	print(VasquezBeggsCorrelation.gass(220,2620,40.7,0.855, 75,100+14.7))
+	print(VasquezBeggsCorrelation.gass(260,2051,48.6,0.911, 72,100+14.7))
+	print(VasquezBeggsCorrelation.gass(237,2884,40.5,0.898,120, 60+14.7))
+	print(VasquezBeggsCorrelation.gass(218,3045,44.2,0.781, 60,200+14.7))
+	print(VasquezBeggsCorrelation.gass(180,4239,27.3,0.848,173, 85+14.7))
 
-	print(VasquezBeggs.sgsgcorr( 60,150+14.7,47.1,0.851))
-	print(VasquezBeggs.sgsgcorr( 75,100+14.7,40.7,0.855))
-	print(VasquezBeggs.sgsgcorr( 72,100+14.7,48.6,0.911))
-	print(VasquezBeggs.sgsgcorr(120, 60+14.7,40.5,0.898))
-	print(VasquezBeggs.sgsgcorr( 60,200+14.7,44.2,0.781))
-	print(VasquezBeggs.sgsgcorr(173, 85+14.7,27.3,0.848))
+	print(VasquezBeggsCorrelation.sgsgcorr( 60,150+14.7,47.1,0.851))
+	print(VasquezBeggsCorrelation.sgsgcorr( 75,100+14.7,40.7,0.855))
+	print(VasquezBeggsCorrelation.sgsgcorr( 72,100+14.7,48.6,0.911))
+	print(VasquezBeggsCorrelation.sgsgcorr(120, 60+14.7,40.5,0.898))
+	print(VasquezBeggsCorrelation.sgsgcorr( 60,200+14.7,44.2,0.781))
+	print(VasquezBeggsCorrelation.sgsgcorr(173, 85+14.7,27.3,0.848))
