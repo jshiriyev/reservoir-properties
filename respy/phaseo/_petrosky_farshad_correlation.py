@@ -5,7 +5,11 @@ from ._crude_oil_system import CrudeOilSystem as cos
 class PetroskyFarshadCorrelation:
 
 	@staticmethod
-	def gass(p:np.ndarray,bpp:float,,sgsg:float,gAPI:float,temp:float)
+	def gassb_to_bpp(Rsb:float,sgsg:float,gAPI:float,temp:float):
+		pass
+
+	@staticmethod
+	def gass_sat(p:float|np.ndarray,bpp:float,,sgsg:float,gAPI:float,temp:float)
 		"""
 		Petrosky and Farshad (1993) used a nonlinear multiple regression software
 		to develop a gas solubility correlation. The authors constructed a
@@ -28,6 +32,30 @@ class PetroskyFarshadCorrelation:
 		_Rs[p<bpp] = ((p[p<bpp]/112.27+12.340)*sgsg**0.8439*10**x)**1.73184
 
 		return _Rs
+
+	@staticmethod
+	def gass_sat_prime(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float):
+		pass
+
+	@staticmethod
+	def fvf_sat(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float):
+		pass
+
+	@staticmethod
+	def fvf_sat_prime(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float):
+		pass
+
+	@staticmethod
+	def fvf_nonsat(p:float|np.ndarray,bpp:float,sgsg:float,gAPI:float,temp:float):
+		pass
+
+	@staticmethod
+	def comp_sat(p:float|np.ndarray):
+		pass
+
+	@staticmethod
+	def comp_nonsat(p:float|np.ndarray,bpp:float,fvfg:np.ndarray,fvfo:np.ndarray,sgsg:float,gAPI:float,temp:float):
+		pass
 
 if __name__ == "__main__":
 
