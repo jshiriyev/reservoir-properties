@@ -141,7 +141,6 @@ class VasquezBeggsCorrelation:
 
 		return C2/p*VasquezBeggsCorrelation.gass_sat(p,sgsg,gAPI,temp,psep,Tsep)
 
-
 	@staticmethod
 	def fvf_sat(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
 		"""
@@ -235,32 +234,64 @@ class VasquezBeggsCorrelation:
 	@staticmethod
 	def fvf_nonsat(p:float|np.ndarray,bpp:float,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
 		"""
-		bpp	 : Bubble point pressure, psia
+		Calculate the undersaturated oil formation volume factor (FVF) 
+		using the Vasquez–Beggs correlation.
+
+		This method estimates the oil FVF at pressures above the bubble point 
+		by first computing the saturated FVF at the bubble point and then 
+		applying the Vasquez–Beggs pressure correction for undersaturated conditions.
+		If separator gas specific gravity is provided at non-standard conditions, 
+		it is corrected to stock-tank conditions before calculations.
+
+		Parameters
+		----------
+		p : float or np.ndarray
+		    Reservoir pressure(s) [psia].
+		bpp : float
+		    Bubble point pressure [psia].
+		sgsg : float
+		    Gas specific gravity at separator conditions (air = 1.0).
+		gAPI : float
+		    Oil API gravity.
+		temp : float
+		    Reservoir temperature [°F].
+		psep : float, optional
+		    Separator pressure [psia]. Used for gas specific gravity correction.
+		Tsep : float, optional
+		    Separator temperature [°F]. Used for gas specific gravity correction.
+
+		Returns
+		-------
+		float or np.ndarray
+		    Undersaturated oil formation volume factor, Bo [rb/STB].
+
+		Notes
+		-----
+		- If `p <= bpp`, the returned value corresponds to the saturated FVF at bubble point.
+		- Gas specific gravity is corrected to stock-tank conditions if `psep` and `Tsep` are provided.
+		- Correlation source: Vasquez, M.E., and Beggs, H.D. (1980).
+		  “Correlations for Fluid Physical Property Prediction.”
+		  Journal of Petroleum Technology, 32(6), 968–970.
+
+		Examples
+		--------
+		>>> VasquezBeggsCorrelation.fvf_nonsat(3500, 3000, 0.85, 35, 180)
+		1.2428
 
 		"""
-		if gAPI<=30.:
-			C1 = 4.677E-04
-			C2 = 1.751E-05
-			C3 = -1.811E-08
-		else:
-			C1 = 4.670E-4
-			C2 = 1.100E-05
-			C3 = 1.337E-09
+		p = np.where(p<bpp,np.nan,p)
 
+		sgsg = VasquezBeggsCorrelation.sgsg_corr(sgsg,gAPI,psep,Tsep)
+
+		Bob = VasquezBeggsCorrelation.fvf_sat(bpp,sgsg,gAPI,temp)
 		Rsb = VasquezBeggsCorrelation.gass_sat(bpp,sgsg,gAPI,temp)
-		Bob = 1.+C1*Rsb+(temp-60)*(gAPI/sgsg)*(C2+C3*Rsb)
 
-		A = (-1433.+5.*Rsb+17.2*temp-1180.*sgsg+12.61*gAPI)/(10**5)
+		A = 1e-5*(-1433.+5.*Rsb+17.2*temp-1180.*sgsg+12.61*gAPI)
 
 		return Bob*np.exp(-A*np.log(p/bpp))
-	
-	@staticmethod
-	def comp_sat(p:float|np.ndarray):
-
-		pass
 
 	@staticmethod
-	def comp_nonsat(p:float|np.ndarray,bpp:float,fvfg:np.ndarray,fvfo:np.ndarray,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
+	def comp_nonsat(p:float|np.ndarray,bpp:float,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
 		"""Calculates oil isothermal compressibility in 1/psi for pressures above
 		buble point.
 
@@ -273,7 +304,7 @@ class VasquezBeggsCorrelation:
 		------
 		p  	 : pressure, psia
 
-		Rsb  : solution gas-oil ratio, scf/stb
+		bpp  : bubble point pressure [psia].
 		
 		sgsg : gas specific gravity
 		gAPI : API oil gravity
@@ -282,12 +313,14 @@ class VasquezBeggsCorrelation:
 		psep : separator pressure, psia
 		Tsep : separator temperature, °F
 
-		"""		
+		"""
+		p = np.where(p<bpp,np.nan,p)
+
 		sgsg = VasquezBeggsCorrelation.sgsg_corr(sgsg,gAPI,psep,Tsep)
 
-		Rsb = VasquezBeggsCorrelation.gass(bpp,bpp,sgsg,gAPI,temp)
+		Rsb = VasquezBeggsCorrelation.gass_sat(bpp,sgsg,gAPI,temp)
 
-		return (-1433.+5.*Rsb+17.2*temp-1180.*sgsg+12.61*gAPI)/(p*10**5)
+		return 1e-5*(-1433.+5.*Rsb+17.2*temp-1180.*sgsg+12.61*gAPI)/p
 		
 if __name__ == "__main__":
 

@@ -5,7 +5,11 @@ from ._crude_oil_system import CrudeOilSystem as cos
 class MarhounsCorrelation:
 
 	@staticmethod
-	def gass(p:np.ndarray,bpp:float,sgsg:float,gAPI:float,temp:float):
+	def gassb_to_bpp(Rsb:float,sgsg:float,gAPI:float,temp:float):
+		pass
+
+	@staticmethod
+	def gass_sat(p:float|np.ndarray,bpp:float,sgsg:float,gAPI:float,temp:float):
 		"""
 		Marhoun (1988) developed an expression for estimating the saturation
 		pressure of the Middle Eastern crude oil systems. The correlation originates
@@ -36,6 +40,30 @@ class MarhounsCorrelation:
 		_Rs[p<bpp] = (a*sgsg**b*sgco**c*(temp+460)**d*p[p<bpp])**e
 
 		return _Rs
+
+	@staticmethod
+	def gass_sat_prime(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float):
+		pass
+
+	@staticmethod
+	def fvf_sat(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float):
+		pass
+
+	@staticmethod
+	def fvf_sat_prime(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float):
+		pass
+
+	@staticmethod
+	def fvf_nonsat(p:float|np.ndarray,bpp:float,sgsg:float,gAPI:float,temp:float):
+		pass
+
+	@staticmethod
+	def comp_sat(p:float|np.ndarray):
+		pass
+
+	@staticmethod
+	def comp_nonsat(p:float|np.ndarray,bpp:float,fvfg:np.ndarray,fvfo:np.ndarray,sgsg:float,gAPI:float,temp:float):
+		pass
 
 if __name__ == "__main__":
 

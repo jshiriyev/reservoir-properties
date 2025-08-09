@@ -11,15 +11,15 @@ class GasOilInterfacialTension:
 		temp   : temperature, °F
 
 		"""
-		s68 = 39 - 0.2571 * gAPI
+		s068 = 39.0 - 0.2571 * gAPI
 		s100 = 37.5 - 0.2571 * gAPI
 
 		if (temp <= 68):
-		    st = s68
+		    st = s068
 		elif (temp >= 100):
 		    st = s100
 		else:
-		    st = s68 - (temp - 68) * (s68 - s100) / 32
+		    st = s068 - (temp - 68) * (s068 - s100) / 32
 
 		c = 1 - 0.024 * p ** 0.45
 		so = c * st

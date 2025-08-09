@@ -5,17 +5,17 @@ from ._crude_oil_system import CrudeOilSystem as cos
 class StandingsCorrelation:
 
 	@staticmethod
-	def bpp(Rsb:float,sgsg:float,gAPI:float,temp:float):
+	def gassb_to_bpp(gassb:float,sgsg:float,gAPI:float,temp:float):
 		"""
 		Calculates the bubblepoint pressure of the oil at reservoir conditions
 		
 		Inputs:
 		------
-		Rsb	 : Gas solubility at the bubble-point pressure, scf/STB
+		gassb 	: Gas solubility at the bubble-point pressure, scf/STB
 		
-		sgsg : Specific gravity of the separator gas
-		gAPI : API gravity of oil, dimensionless
-		temp : System temperature, °F
+		sgsg 	: Specific gravity of the separator gas
+		gAPI 	: API gravity of oil, dimensionless
+		temp 	: System temperature, °F
 
 		The equations are valid to 325F. The correlation should be used with caution
 		if nonhydrocarbon components are known to be present in the system.
@@ -23,12 +23,12 @@ class StandingsCorrelation:
 		"""
 		x = 0.00091*temp-0.0125*gAPI
 
-		Cpb = (Rsb/sgsg)**0.83*10**x
+		Cpb = (gassb/sgsg)**0.83*10**x
 
 		return 18.2*(Cpb-1.4)
 
 	@staticmethod
-	def gass(p:np.ndarray,bpp:float,sgsg:float,gAPI:float,temp:float):
+	def gass_sat(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float):
 		"""
 		Standing (1947) proposed a graphical correlation for determining the
 		gas solubility as a function of pressure, gas specific gravity, API gravity,
@@ -44,8 +44,6 @@ class StandingsCorrelation:
 		Inputs:
 		------
 		p 	 : System pressure, psia
-
-		bpp  : Bubble point pressure, psia
 		
 		sgsg : Solution gas specific gravity
 		gAPI : API gravity of oil, dimensionless
@@ -56,17 +54,48 @@ class StandingsCorrelation:
 
 		"""
 		x = 0.0125*gAPI-0.00091*temp
-		p = np.atleast_1d(p)
 
-		Rsb = sgsg*((bpp/18.2+1.4)*10**x)**(1/0.83)
-
-		_Rs = np.full_like(p,Rsb)
-		_Rs[p<bpp] = sgsg*((p[p<bpp]/18.2+1.4)*10**x)**1.20482
-
-		return _Rs
+		return sgsg*((p/18.2+1.4)*10**x)**(1./0.83)
 
 	@staticmethod
-	def fvf(p:np.ndarray,bpp:float,sgsg:float,gAPI:float,temp:float):
+	def gass_sat_prime(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float):
+		"""
+		Calculate the derivative of gas solubility (Rs) with respect to pressure 
+		using the Standing correlation.
+
+		The Standing method estimates the solution gas–oil ratio (Rs) in oil 
+		reservoirs based on gas specific gravity, oil API gravity, reservoir 
+		temperature, and pressure. This function computes:
+
+		    dRs/dP  [scf/STB/psi]
+
+		where:
+		    Rs  = gas solubility in stock tank barrels of oil (STB)
+		    P   = reservoir pressure (psi)
+
+		Notes
+		-----
+		The derivative is obtained by differentiating the Standing's equation with respect 
+		to p, holding gas gravity, API, and temperature constant.
+
+		References
+		----------
+		Standing, M.B., 1947. 
+		“A Pressure-Volume-Temperature Correlation for Mixtures of California Oils and Gases.”
+		Drilling and Production Practice, API.
+
+		Example
+		-------
+		>>> StandingsCorrelation.gass_sat_prime(2500, 0.85, 35, 180)
+		0.0421
+
+		"""
+		gass = StandingsCorrelation.gass_sat(p,sgsg,gAPI,temp)
+
+		return gass/(0.83*p+21.1484)
+
+	@staticmethod
+	def fvf_sat(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float):
 		"""
 		Standing (1947) presented a graphical correlation for estimating the oil
 		formation volume factor with the gas solubility, gas gravity, oil gravity,
@@ -90,41 +119,78 @@ class StandingsCorrelation:
 		"""
 		sgco = cos.gAPI_to_sgco(gAPI)
 
-		gass = StandingsCorrelation.gass(p,bpp,sgsg,gAPI,temp)
+		gass = StandingsCorrelation.gass_sat(p,sgsg,gAPI,temp)
 
 		CBob = gass*(sgsg/sgco)**0.5+1.25*temp
 
-		# oil formation volume factor at the bubble-point pressure, bbl/STB
-		Bob = 0.9759+0.00012*CBob**1.2
-
-		return Bob # Bob*np.exp(-co*(p-bpp))
+		return 0.9759+0.00012*CBob**1.2
 
 	@staticmethod
-	def comp(p:np.ndarray,bpp:float,fvfg:np.ndarray,fvfo:np.ndarray,sgsg:float,gAPI:float,temp:float):
+	def fvf_sat_prime(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float):
 		"""
-		It calculates compressibility based on the analytical derivation.
+		Calculate the derivative of the oil formation volume factor (Bo) with respect 
+		to pressure using the Standing correlation for saturated oil.
 
-		Inputs:
-		------
-		p 	 : Pressure, psia
+		The Standing correlation estimates Bo at saturation conditions based on 
+		solution gas–oil ratio (Rs), gas specific gravity, oil API gravity, and 
+		temperature. This method differentiates the Bo correlation with respect to 
+		pressure to obtain:
 
-		gass : Gas solubility at pressure p, scf/STB
-		fvfg : Gas formation volume factor at pressure p, bbl/scf
-		fvfo : Oil formation volume factor at p, bbl/STB
+		    dBo/dP  [RB/STB/psi]
 
-		sgsg : Specific gravity of the solution gas
-		gAPI : API gravity of oil, dimensionless
-		temp : Temperature, °F
+		Parameters
+		----------
+		p : float or numpy.ndarray
+		    Reservoir pressure in psi.
+		sgsg : float
+		    Solution gas specific gravity (air = 1.0).
+		gAPI : float
+		    Oil API gravity.
+		temp : float
+		    Reservoir temperature in °F.
+
+		Returns
+		-------
+		float or numpy.ndarray
+		    Derivative of oil formation volume factor with respect to pressure, 
+		    dBo/dP, in RB/STB/psi.
+
+		Notes
+		-----
+		Standing’s correlation for saturated oil FVF:
+		    Bo = 0.9759 + 0.00012 * [ Rs * ( (γg / γo) ** 0.5 ) + 1.25 * T ] ^ 1.2
+
+		where:
+		    γo = 141.5 / (API + 131.5)
+		    Rs = solution gas–oil ratio from Standing correlation.
+
+		The derivative is computed using the chain rule:
+		    dBo/dP = (∂Bo/∂Rs) * (dRs/dP)
+
+		Both Rs and dRs/dP are evaluated from Standing's method, holding gas 
+		gravity, oil gravity, and temperature constant.
+
+		References
+		----------
+		Standing, M.B., 1947. 
+		“A Pressure-Volume-Temperature Correlation for Mixtures of California Oils and Gases.”
+		Drilling and Production Practice, API.
+
+		Example
+		-------
+		>>> fvf_sat_prime(2500, 0.85, 35, 180)
+		2.4e-05
 
 		"""
 		sgco = cos.gAPI_to_sgco(gAPI)
 
-		gass = StandingsCorrelation.gass(p,bpp,sgsg,gAPI,temp)
+		gass = StandingsCorrelation.gass_sat(p,sgsg,gAPI,temp)
 
-		pRs = gass/(0.83*p+21.75)
-		pBo = 0.000144*pRs*np.sqrt(sgsg/sgco)*(gass*np.sqrt(sgsg/sgco)+1.25*temp)**0.12
+		gassp = StandingsCorrelation.gass_sat_prime(p,sgsg,gAPI,temp)
 
-		return (fvfg*pRs-pBo)/fvfo
+		sqrt = (sgsg/sgco)**0.5
+
+		return 0.000144*(gass*sqrt+1.25*temp)**0.2*gassp*sqrt
 
 if __name__ == "__main__":
 

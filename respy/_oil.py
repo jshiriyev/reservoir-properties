@@ -10,6 +10,14 @@ from .phaseo._crude_oil_system import CrudeOilSystem
 
 class OilPhase(CrudeOilSystem):
 
+    METHODS = {
+        'standing': 'standings_correlation',
+        'vasquez-beggs': 'vasquez_beggs_correlation',
+        'glaso': 'glasos_correlation',
+        'marhoun': 'marhouns_correlation',
+        'petrosky-farshad': 'petrosky_farshad_correlation',
+        }
+
     def __init__(self,sgsg:float,gAPI:float,temp:float):
         """
         Initialize a phaseo instance.
@@ -40,7 +48,62 @@ class OilPhase(CrudeOilSystem):
         """Get the temperature of the reservoir."""
         return self._temp
 
-    def __call__(self,bpp:float=None,Rsb:float=None,method="standings_correlation",**kwargs):
+    @property
+    def props(self):
+        """Get the tuple of three main instance attributes:
+
+        - solution gas specific gravity
+        - oil API gravity
+        - system temperature in F
+
+        """
+        return (self._sgsg,self._gAPI,self._temp)
+
+    def call(self,method:str="vasquez-beggs"):
+        """
+        Retrieve and return the oil property correlation class based on the specified method name.
+
+        This method uses the `METHODS` mapping to resolve a user-friendly method name 
+        (e.g., "vasquez-beggs", "standing", "glaso") into the corresponding internal 
+        correlation class. The method dynamically imports the correct module from the 
+        `phaseo` package and returns the associated class for further use.
+
+        Parameters
+        ----------
+        method : str, optional
+            The correlation method key, as defined in the `METHODS` dictionary. 
+            Supported keys:
+            - "standing" → `standings_correlation`
+            - "vasquez-beggs" → `vasquez_beggs_correlation`
+            - "glaso" → `glasos_correlation`
+            - "marhoun" → `marhouns_correlation`
+            - "petrosky-farshad" → `petrosky_farshad_correlation`
+
+            Default is "vasquez-beggs".
+
+        Returns
+        -------
+        type
+            The class corresponding to the specified correlation method.
+
+        Raises
+        ------
+        ValueError
+            If the provided `method` key is not found in `METHODS`, or if the 
+            corresponding module/class cannot be imported.
+        ImportError
+            If the module for the specified correlation cannot be found.
+        AttributeError
+            If the correlation class cannot be found within the imported module.
+
+        Examples
+        --------
+        >>> oil = OilPhase(sgsg,gAPI,temp)
+        >>> correlation = oil.call("standing")
+        >>> correlation.some_method(...)
+
+        """
+        method = self.METHODS[method]
 
         sys.path.append(os.path.dirname(__file__))
 
@@ -50,23 +113,11 @@ class OilPhase(CrudeOilSystem):
         # Import the correct method class dynamically
         try:
             module = importlib.import_module(f"phaseo._{method}")
-            self.__corr = getattr(module,method_class)
+            return getattr(module,method_class)
         except (ImportError, AttributeError):
             raise ValueError(f"Method '{method}' not found or invalid.")
-
-        if bpp is None:
-            self._bpp = self.__corr.bpp(Rsb,self.sgsg,self.gAPI,self.temp,**kwargs)
-        else:
-            self._bpp = bpp
-
-        return self
-
-    @property
-    def bpp(self):
-        """Get the bubble point pressure."""
-        return self._bpp
     
-    def gass(self,p:np.ndarray,**kwargs):
+    def gass(self,p:np.ndarray,bpp:float,method='vasquez-beggs',**kwargs):
         """
         The gas solubility Rs is defined as the number of standard cubic feet of
         gas which will dissolve in one stock-tank barrel of crude oil at certain
@@ -97,22 +148,23 @@ class OilPhase(CrudeOilSystem):
         given below:
 
         • Standing’s correlation (standing)
-        • The Vasquez-Beggs correlation (vasquez_beggs)
+        • The Vasquez-Beggs correlation (vasquez-beggs)
         • Glaso’s correlation (glaso)
         • Marhoun’s correlation (marhoun)
         • The Petrosky-Farshad correlation (petrosky_farshad)
 
         """
-        Rsb = self.__corr.gass_sat(self.bpp,sgsg,gAPI,temp,**kwargs)
+        p,corr = np.atleast_1d(p),self.call(method)
 
-        _p = np.atleast_1d(p)
-        Rs = np.full_like(_p,Rsb)
+        Rsb = corr.gass_sat(bpp,*self.props,**kwargs)
 
-        Rs[_p<self.bpp] = self.__corr.gass_sat(_p[_p<self.bpp],self.sgsg,self.gAPI,self.temp,**kwargs)
+        Rs = np.full_like(p,Rsb)
+
+        Rs[p<bpp] = corr.gass_sat(p[p<bpp],*self.props,**kwargs)
 
         return Rs
 
-    def fvf(self,p:np.ndarray,**kwargs):
+    def fvf(self,p:np.ndarray,bpp:float,method='vasquez-beggs',**kwargs):
         """
         The oil formation volume factor, Bo, is defined as the ratio of the volume
         of oil (plus the gas in solution) at the prevailing reservoir temperature
@@ -163,7 +215,13 @@ class OilPhase(CrudeOilSystem):
         equal to or below the bubble-point pressure.
 
         """
-        return self.__corr.fvf(p,self.bpp,self.sgsg,self.gAPI,self.temp,**kwargs)
+        p,corr = np.atleast_1d(p),self.call(method)
+
+        Bo = corr.fvf_sat(p,*self.props,**kwargs)
+
+        Bo[p>bpp] = corr.fvf_nonsat(p[p>bpp],bpp,*self.props,**kwargs)
+
+        return Bo
 
     def rho(self,p,Bo,Rs,sgsg,gAPI,temp,Tsep,psep):
         """
@@ -201,7 +259,7 @@ class OilPhase(CrudeOilSystem):
         
         return rho_o
 
-    def comp(self,p:np.ndarray,**kwargs):
+    def comp(self,p:np.ndarray,bpp:float,method='vasquez-beggs',**kwargs):
         """
         Isothermal compressibility coefficients are required in solving many
         reservoir engineering problems, including transient fluid flow problems,
@@ -226,7 +284,15 @@ class OilPhase(CrudeOilSystem):
         • McCain’s correlation
 
         """
-        return self.__corr.comp(p,*args,**kwargs)
+        p,corr = np.atleast_1d(p),self.call(method)
+
+        Rsb = corr.gass_sat(bpp,*self.props,**kwargs)
+
+        co = self.get_comp_sat(p,*self.props,Rsb,bpp)
+
+        co[p>bpp] = corr.comp_nonsat(p[p>bpp],bpp,*self.props,**kwargs)
+
+        return co
 
     def visc(self):
 

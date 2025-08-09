@@ -161,6 +161,30 @@ class CrudeOilSystem:
 		"""
 		return (fvfo*rhoo-62.4*sgco)/(0.0136*sgsg)
 
+	@staticmethod
+	def get_comp_sat(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float,gassb:float,bpp:float=None):
+		"""
+		Below the bubble-point pressure, McCain and coauthors (1988) correlated
+		the oil compressibility with pressure, the oil API gravity, gas solubility
+		at the bubble-point Rsb, and the temperature T in °F. Their proposed
+		relationship has the following form:
+
+		co = exp(A)
+
+		where A has the two empirical equations depending on the availability of
+		bubble point pressure. The authors suggested that the accuracy of the equation
+		can be substantially improved if the bubble-point pressure is known.
+
+		"""
+		if bpp is None:
+			A = -7.633-1.497*np.log(p)+1.115*np.log(temp+460)+\
+				0.533*np.log(gAPI)+0.184*np.log(gassb)
+		else:
+			A = -7.573-1.450*np.log(p)+1.402*np.log(temp+460)+\
+			0.256*np.log(gAPI)+0.449*np.log(gassb)-0.383*np.log(bpp)
+
+		return np.exp(A)
+
 if __name__ == "__main__":
 
 	sgco = CrudeOilSystem.get_sgco(53)
@@ -170,9 +194,11 @@ if __name__ == "__main__":
 
 	print(CrudeOilSystem.get_sgsg((724,0.743),(202,0.956),ST=(58,1.296)))
 
-	print(CrudeOilSystem.gass(38.13,1.528,47.1,0.851))
-	print(CrudeOilSystem.gass(40.95,1.474,40.7,0.855))
-	print(CrudeOilSystem.gass(37.37,1.529,48.6,0.911))
-	print(CrudeOilSystem.gass(38.92,1.619,40.5,0.898))
-	print(CrudeOilSystem.gass(37.70,1.570,44.2,0.781))
-	print(CrudeOilSystem.gass(46.79,1.385,27.3,0.848))
+	# sgsg:float,sgco:float,rhoo:float,fvfo:float
+	
+	print(CrudeOilSystem.get_gass(0.851,CrudeOilSystem.gAPI_to_sgco(47.1),38.13,1.528))
+	print(CrudeOilSystem.get_gass(0.855,CrudeOilSystem.gAPI_to_sgco(40.7),40.95,1.474))
+	print(CrudeOilSystem.get_gass(0.911,CrudeOilSystem.gAPI_to_sgco(48.6),37.37,1.529))
+	print(CrudeOilSystem.get_gass(0.898,CrudeOilSystem.gAPI_to_sgco(40.5),38.92,1.619))
+	print(CrudeOilSystem.get_gass(0.781,CrudeOilSystem.gAPI_to_sgco(44.2),37.70,1.570))
+	print(CrudeOilSystem.get_gass(0.848,CrudeOilSystem.gAPI_to_sgco(27.3),46.79,1.385))
