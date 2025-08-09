@@ -6,14 +6,15 @@ class VasquezBeggsCorrelation:
 
 	@staticmethod
 	def sgsg_corr(sgsg:float,gAPI:float,psep:float=None,Tsep:float=None):
-		"""Method to calculate corrected specific gravity for the solution gas:
+		"""
+		Method to calculate corrected specific gravity for the solution gas.
 
 		Realizing that the value of the specific gravity of the gas depends on
 		the conditions under which it is separated from the oil, Vasquez and
 		Beggs proposed that the value of the gas specific gravity as obtained
-		from a separator pressure of 100 psig be used in the above equation. This
-		reference pressure was chosen because it represents the average field
-		separator conditions.
+		from a separator pressure of 100 psig be used in the fluid property
+		calculation equations. This reference pressure was chosen because it
+		represents the average field separator conditions.
 		
 		Inputs:
 		------
@@ -29,8 +30,7 @@ class VasquezBeggsCorrelation:
 		The gas gravity used to develop all the correlations reported by the
 		authors was that which would result from a two-stage separation. The
 		first-stage pressure was chosen as 100 psig and the second stage was the
-		stock tank. If the separator conditions are unknown, the unadjusted gas
-		gravity may be used.
+		stock tank.
 
 		"""
 		if psep and Tsep:
@@ -39,21 +39,21 @@ class VasquezBeggsCorrelation:
 		return sgsg
 
 	@staticmethod
-	def gassb_to_bpp(Rsb:float,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
+	def gassb_to_bpp(gassb:float,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
 		"""
 		Vasquez and Beggs’ gas solubility correlation can be solved for the
 		bubble-point pressure that will require the following inputs:
 		
 		Inputs:
 		------
-		Rsb	 : Gas solubility at the bubble-point pressure, scf/STB
+		gassb 	: Gas solubility at the bubble-point pressure, scf/STB
 		
-		sgsg : Specific gravity of the separator gas
-		gAPI : API oil gravity, dimensionless
-		temp : System temperature, °F
+		sgsg 	: Specific gravity of the separator gas
+		gAPI 	: API oil gravity, dimensionless
+		temp 	: System temperature, °F
 		
-		psep : Separator pressure, psia
-		Tsep : Separator temperature, °F
+		psep 	: Separator pressure, psia
+		Tsep 	: Separator temperature, °F
 
 		"""
 		if gAPI<=30.:
@@ -67,10 +67,9 @@ class VasquezBeggsCorrelation:
 
 		sgsg = VasquezBeggsCorrelation.sgsg_corr(sgsg,gAPI,psep,Tsep)
 		
-		a = -C3*gAPI/temp
+		a = -C3*gAPI/(temp+460)
 
-		# return (Rs / (C1 * sgsg * math.exp(C3 * gAPI / (temp + 460)))) **(1 / C2)
-		return (C1*Rsb/sgsg*10**a)**C2
+		return (C1*gassb/sgsg*10**a)**C2
 
 	@staticmethod
 	def gass_sat(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
@@ -85,8 +84,6 @@ class VasquezBeggsCorrelation:
 		Inputs:
 		------
 		p		: System pressure, psia
-
-		bpp		: Bubble point pressure, psia
 		
 		sgsg	: Solution gas specific gravity
 		gAPI 	: API gravity of oil, dimensionless
@@ -114,19 +111,47 @@ class VasquezBeggsCorrelation:
 		return C1*sgsg*p**C2*np.exp(C3*gAPI/(temp+460))
 
 	@staticmethod
-	def gass_sat_prime(p:float|np.ndarray):
+	def gass_sat_prime(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
+		"""
+		Calculate the derivative of gas solubility (Rs) with respect to pressure 
+		using the Vasquez-Beggs correlation.
 
-		pass
+		The method estimates the solution gas–oil ratio (Rs) in oil 
+		reservoirs based on gas specific gravity, oil API gravity, reservoir 
+		temperature, and pressure. This function computes:
+
+		    dRs/dP  [scf/STB/psi]
+
+		where:
+		    Rs  = gas solubility in stock tank barrels of oil (STB)
+		    P   = reservoir pressure (psi)
+
+		Notes
+		-----
+		The derivative is obtained by differentiating the Vasquez-Beggs equation with respect 
+		to p, holding gas gravity, API, and temperature constant.
+
+		Example
+		-------
+		>>> VasquezBeggsCorrelation.gass_sat_prime(2500, 0.85, 35, 180)
+		0.0421
+
+		"""
+		C2 = 1.0937 if gAPI<=30. else 1.1870
+
+		return C2/p*VasquezBeggsCorrelation.gass_sat(p,sgsg,gAPI,temp,psep,Tsep)
+
 
 	@staticmethod
 	def fvf_sat(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
-		"""Calculates Oil Formation Volume Factor in bbl/stb
+		"""
+		Calculates Oil Formation Volume Factor in bbl/stb
 
 		Vasquez and Beggs (1980) developed a relationship for determining
-		Bo as a function of Rs, go, sgsg, and T. The proposed correlation was based
+		Bo as a function of Rs, sgco, sgsg, and temp. The proposed correlation was based
 		on 6,000 measurements of Bo at various pressures. Using the regression
 		analysis technique, Vasquez and Beggs found the method to
-		be the best form to reproduce the measured data
+		be the best form to reproduce the measured data:
 		
 		Inputs:
 		------
@@ -148,7 +173,7 @@ class VasquezBeggsCorrelation:
 			C2 = 1.751E-05
 			C3 = -1.811E-08
 		else:
-			C1 = 4.670E-4
+			C1 = 4.670E-04
 			C2 = 1.100E-05
 			C3 = 1.337E-09
 
@@ -159,9 +184,53 @@ class VasquezBeggsCorrelation:
 		return 1.+C1*Rs+(temp-60)*(gAPI/sgsg)*(C2+C3*Rs)
 
 	@staticmethod
-	def fvf_sat_prime(p:float|np.ndarray):
+	def fvf_sat_prime(p:float|np.ndarray,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):
+		"""
+		Calculate the derivative of the oil formation volume factor (Bo) with respect 
+		to pressure using the Vasquez-Beggs correlation for saturated oil.
 
-		pass
+		The correlation estimates Bo at saturation conditions based on 
+		solution gas–oil ratio (Rs), gas specific gravity, oil API gravity, and 
+		temperature. This method differentiates the Bo correlation with respect to 
+		pressure to obtain:
+
+		    dBo/dP  [RB/STB/psi]
+
+		Parameters
+		----------
+		p 	 : float or numpy.ndarray
+		    Reservoir pressure in psi.
+		sgsg : float
+		    Solution gas specific gravity (air = 1.0).
+		gAPI : float
+		    Oil API gravity.
+		temp : float
+		    Reservoir temperature in °F.
+
+		Returns
+		-------
+		float or numpy.ndarray
+		    Derivative of oil formation volume factor with respect to pressure, 
+		    dBo/dP, in RB/STB/psi.
+
+		The derivative is computed using the chain rule:
+		    dBo/dP = (∂Bo/∂Rs) * (dRs/dP)
+
+		Both Rs and dRs/dP are evaluated from Vasquez-Beggs method, holding gas 
+		gravity, oil gravity, and temperature constant.
+
+		Example
+		-------
+		>>> fvf_sat_prime(2500, 0.85, 35, 180)
+		2.4e-05
+
+		"""
+		C1 =  4.677E-04 if gAPI<=30. else 4.670E-04
+		C3 = -1.811E-08 if gAPI<=30. else 1.337E-09
+
+		Rsp = VasquezBeggsCorrelation.gass_sat_prime(p,sgsg,gAPI,temp,psep,Tsep)
+
+		return C1*Rsp+(temp-60)*(gAPI/sgsg)*(C3*Rsp)
 
 	@staticmethod
 	def fvf_nonsat(p:float|np.ndarray,bpp:float,sgsg:float,gAPI:float,temp:float,psep:float=None,Tsep:float=None):

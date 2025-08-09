@@ -80,13 +80,13 @@ class CrudeOilSystem:
 
 		This weighted-average approach is based on the separator gas-oil ratio.
 		
-		The ST (stock-tank) is a tuple with Rst and gst values:
-			Rst = gas-oil ratio from the stock tank, scf/ STB
-			gst = gas gravity from the stock tank
-		
 		For each separator Rsep and gsep values must be provided:
 			Rsep = separator gas-oil ratio, scf/STB
 			gsep = separator gas gravity
+
+		The ST (stock-tank) is a tuple with Rst and gst values:
+			Rst = gas-oil ratio from the stock tank, scf/ STB
+			gst = gas gravity from the stock tank
 		
 		Returns:
 		-------
@@ -106,37 +106,52 @@ class CrudeOilSystem:
 
 		return upper/lower
 
-	def get_gassb():
-		"""Calculates the stock-tank GOR. It should not be used
-		if the separator temperature is >140F."""
+	@staticmethod
+	def get_gassb(sgsg:float,sgco:float,psep:float,Tsep:float):
+		"""
+		Calculates the stock-tank GOR based on:
 
-		# CREEGER
+		`Rollins, J.B., McCain, W.D. Jr., and Creeger, J.T.: "Estimation of
+		Solution GOR of Black Oils," JPT (Jan. 1990) 92-94; Trans., AIME,
+		289.`
 
+		It should not be used if the separator temperature is >140F.
+
+		The initial producing GOR provides a good estimate of solution
+		GOR for use at pressures equal to and above bubblepoint pressure.
+		This will not be true if free gas from a gas cap or another
+		formation is produced with the oil.
+
+		Field data often exhibit a great deal of scatter; however, a trend of
+		constant GOR usually can be discerned before reservoir pressure drops
+		below the bubblepoint.
+
+		"""
 		A1 =  0.3818
 		A2 = -5.506
 		A3 =  2.902
 		A4 =  1.327
 		A5 = -0.7355
 
-		logrst = A1+A2*np.log(gamma_oil)+A3*np.log(gamma_gas_sp)+\
-		            A4*np.log(Psp)+A5*np.log(Tsp)
+		logRst = A1+A2*np.log(sgco)+A3*np.log(sgsg)+\
+		            A4*np.log(psep)+A5*np.log(Tsep)
 
-		return np.exp(logrst)
+		return np.exp(logRst)
 
 	@staticmethod
-	def get_gass(rho,fvf,sgsg,gAPI):
+	def get_gass(sgsg:float,sgco:float,rhoo:float,fvfo:float):
 		"""
 		The gas solubility can also be calculated rigorously from the experimental
 		measured PVT data at the specified pressure and temperature.
 
 		The method relates the gas solubility Rs to oil density, specific
 		gravity of the oil, gas gravity, and the oil formation volume factor
-
-		rho = oil density, lb/ft3
-		fvf = oil formation volume factor, bbl/STB
-
+		
 		sgsg = specific gravity of the solution gas
 		sgco = specific gravity of the stock-tank oil
+
+		rhoo = oil density at the given pressure and temperature, lb/ft3
+		fvfo = oil formation volume factor at the given pressure and temperature, bbl/STB
 
 		McCain (1991) pointed out that the weight average of separator and
 		stock-tank gas specific gravities should be used for sgsg. The error in calculating
@@ -144,9 +159,7 @@ class CrudeOilSystem:
 		of the available PVT data.
 
 		"""
-		sgco = 141.5/(gAPI+131.5)
-
-		return (fvf*rho-62.4*sgco)/(0.0136*sgsg)
+		return (fvfo*rhoo-62.4*sgco)/(0.0136*sgsg)
 
 if __name__ == "__main__":
 
