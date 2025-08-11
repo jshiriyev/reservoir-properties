@@ -95,6 +95,9 @@ respy
 See `examples/` for scripts that generate typical plots, such as:
 
 * Gas compressibility factor vs reduced pressure & temperature.
+
+<img src="img/gas_compressibility_factor.png">
+
 * Oil viscosity vs pressure.
 * Formation volume factor vs pressure.
 * Relative permeability vs. saturation ternary plots
