@@ -4,7 +4,7 @@
 >
 > Suggested citation (modify to match journal style):
 >
-> **Shiriyev, J.**, *Reservoir Fluid & Rock Correlations (respy)* (GitHub repository), 2025. [https://github.com/](https://github.com/jshiriyev)
+> **Shiriyev, J.**, *Reservoir Fluid & Rock Correlations (respy)* (GitHub repository), 2025. [https://github.com/jshiriyev](https://github.com/jshiriyev)
 
 ---
 
