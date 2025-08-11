@@ -81,11 +81,11 @@ print(pvt.head())
 
 ```
 respy
-├── capress   # capillary pressure models
-├── phaseg    # gas properties
-├── phaseo    # oil properties
-├── relperm   # relative permeability models
-└── phasew    # water properties
+├── capip   # capillary pressure models
+├── phaseg  # gas properties
+├── phaseo  # oil properties
+├── rperm   # relative permeability models
+└── phasew  # water properties
 ```
 
 ---
@@ -97,15 +97,18 @@ See `examples/` for scripts that generate typical plots, such as:
 * Gas compressibility factor vs reduced pressure & temperature.
 * Oil viscosity vs pressure.
 * Formation volume factor vs pressure.
+* Relative permeability vs. saturation ternary plots
+
+<img src="img/relative_permeabilities.png">
 
 ---
 
 ## API overview
 
-* `capress` — capillary pressure correlations.
+* `capip` — capillary pressure correlations.
 * `phaseg` — gas correlations and z-factor.
 * `phaseo` — oil correlations: Rs, Bo, muo, bubble-point, compressibility.
-* `relperm` — relative permeability models.
+* `rperm` — relative permeability models.
 * `phasew` — brine properties and water viscosity/salinity models.
 
 ---

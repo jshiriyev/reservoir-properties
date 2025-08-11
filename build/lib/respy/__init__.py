@@ -1,8 +1,8 @@
 from . import phaseg
 from . import phaseo
 
-from . import capress
-from . import relperm
+from . import capip
+from . import rperm
 
 from ._fluid import Fluid
 from ._layer import Layer
