@@ -1,22 +1,8 @@
-import importlib.util
-from pathlib import Path
-
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
-from prodpy import UnitConversion as uc
-
-
-def _load_layer_module():
-    module_path = Path(__file__).parents[1] / "prodpy" / "resprops" / "_layer.py"
-    spec = importlib.util.spec_from_file_location("layer", module_path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-Layer = _load_layer_module().Layer
+from resprops import Layer, UnitConversion as uc
 
 
 def test_reduced_permeability_and_si_storage():

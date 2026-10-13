@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import constants
 
-from prodpy import UnitConversion as uc
+from ._unit_conversion import UnitConversion as uc
 
 from ._layer import Layer
 

@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 from numpy.testing import assert_allclose
 
-from prodpy.resprops.rperm._interpolator import Interpolator
+from resprops.rperm._interpolator import Interpolator
 
 
 @pytest.fixture

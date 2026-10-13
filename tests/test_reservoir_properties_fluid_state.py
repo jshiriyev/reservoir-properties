@@ -5,8 +5,8 @@ import pytest
 
 from scipy import constants
 
-from prodpy.resprops import Fluid
-from prodpy import UnitConversion as uc
+from resprops import Fluid
+from resprops import UnitConversion as uc
 
 def test_oilfield_units_and_si_storage():
     fluid = Fluid(

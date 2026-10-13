@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from prodpy.resprops.rperm.models import ModifiedCorey
+from resprops.rperm.models import ModifiedCorey
 
 def test_oil_water_imbibition():
     """

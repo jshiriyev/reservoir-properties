@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
-from prodpy import UnitConversion as uc
-from prodpy.resprops import BlackOil, Fluid
+from resprops import UnitConversion as uc
+from resprops import BlackOil, Fluid
 
 
 def _fluid(visc=1.0, *, press=None, satur=0.0, comp=None, size=None):
@@ -11,7 +11,7 @@ def _fluid(visc=1.0, *, press=None, satur=0.0, comp=None, size=None):
 
 
 def test_black_oil_is_exported_from_resprops():
-    from prodpy import resprops
+    import resprops
 
     assert resprops.BlackOil is BlackOil
 

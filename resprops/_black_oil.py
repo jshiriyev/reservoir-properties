@@ -1,6 +1,6 @@
 import numpy as np
 
-from prodpy import UnitConversion as uc
+from ._unit_conversion import UnitConversion as uc
 
 from ._fluid import Fluid
 
@@ -25,7 +25,7 @@ class BlackOil:
 
     These are algebraic phase-pressure differences. Saturation-dependent
     capillary-pressure correlations such as Brooks-Corey and Van Genuchten
-    remain in :mod:`prodpy.resprops.capip`.
+    remain in :mod:`resprops.capip`.
     """
 
     DEFAULT_SATURATION_TOLERANCE = 1e-12

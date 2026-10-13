@@ -1,6 +1,6 @@
 import numpy as np
 
-from prodpy import UnitConversion as uc
+from ._unit_conversion import UnitConversion as uc
 
 class Layer():
 	"""
